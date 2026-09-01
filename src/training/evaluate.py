@@ -101,7 +101,7 @@ def main(a):
         ds = ImageDataset(df[df.split == "test"])
     loader = DataLoader(ds, batch_size=a.batch, num_workers=a.workers)
 
-    model = build_model(a.model, pretrained=False).to(dev)
+    model = build_model(a.model, pretrained=False, backbone=a.backbone).to(dev)
     ckpt = os.path.join(ROOT, f"best_{a.model}.pt")
     model.load_state_dict(torch.load(ckpt, map_location=dev))
 
@@ -134,6 +134,8 @@ def main(a):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
+    ap.add_argument("--backbone", default="mobilenetv3_small",
+                    choices=["mobilenetv3_small", "mobilenetv3_large"])
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--workers", type=int, default=4)
     main(ap.parse_args())

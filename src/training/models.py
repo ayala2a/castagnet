@@ -48,11 +48,15 @@ class SimpleCNN(nn.Module):
         return self.head(self.pool(self.features(x)))
 
 
-def _backbone(pretrained=True):
-    """MobileNetV3-Small sans sa tête -> extracteur de features (576-d)."""
-    w = tvm.MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretrained else None
-    m = tvm.mobilenet_v3_small(weights=w)
-    feat_dim = m.classifier[0].in_features  # 576
+def _backbone(name="mobilenetv3_small", pretrained=True):
+    """MobileNetV3 (small ou large) sans sa tête -> extracteur de features."""
+    if name == "mobilenetv3_large":
+        w = tvm.MobileNet_V3_Large_Weights.IMAGENET1K_V2 if pretrained else None
+        m = tvm.mobilenet_v3_large(weights=w)
+    else:
+        w = tvm.MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretrained else None
+        m = tvm.mobilenet_v3_small(weights=w)
+    feat_dim = m.classifier[0].in_features  # 576 (small) / 960 (large)
     m.classifier = nn.Identity()
     return m, feat_dim
 
@@ -63,10 +67,10 @@ class DualBranchNet(nn.Module):
     """
 
     def __init__(self, num_classes=NUM_CLASSES, pretrained=True, shared=True,
-                 fusion="concat"):
+                 fusion="concat", backbone="mobilenetv3_small"):
         super().__init__()
-        self.enc_t, feat = _backbone(pretrained)
-        self.enc_b = self.enc_t if shared else _backbone(pretrained)[0]
+        self.enc_t, feat = _backbone(backbone, pretrained)
+        self.enc_b = self.enc_t if shared else _backbone(backbone, pretrained)[0]
         self.fusion = fusion
         fused = feat * 2 if fusion == "concat" else feat
         self.head = nn.Sequential(
@@ -80,9 +84,9 @@ class DualBranchNet(nn.Module):
         return self.head(z)
 
 
-def build_model(name, pretrained=True):
+def build_model(name, pretrained=True, backbone="mobilenetv3_small"):
     if name == "simplecnn":
         return SimpleCNN()
     if name == "dualbranch":
-        return DualBranchNet(pretrained=pretrained)
+        return DualBranchNet(pretrained=pretrained, backbone=backbone)
     raise ValueError(f"modèle inconnu : {name}")

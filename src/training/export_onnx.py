@@ -23,8 +23,8 @@ from models import build_model
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def export(model_name, out_path):
-    model = build_model(model_name, pretrained=False)
+def export(model_name, out_path, backbone="mobilenetv3_small"):
+    model = build_model(model_name, pretrained=False, backbone=backbone)
     ckpt = os.path.join(ROOT, f"best_{model_name}.pt")
     if os.path.exists(ckpt):
         model.load_state_dict(torch.load(ckpt, map_location="cpu"))
@@ -78,7 +78,7 @@ def bench(sess, names, batches=(1, 12, 24), n=100, warm=10):
 
 def main(a):
     onnx_path = os.path.join(ROOT, f"model_{a.model}.onnx")
-    model, dummy, names = export(a.model, onnx_path)
+    model, dummy, names = export(a.model, onnx_path, backbone=a.backbone)
     sess = verify(model, dummy, names, onnx_path)
     res = bench(sess, names)
 
@@ -97,4 +97,6 @@ def main(a):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
+    ap.add_argument("--backbone", default="mobilenetv3_small",
+                    choices=["mobilenetv3_small", "mobilenetv3_large"])
     main(ap.parse_args())

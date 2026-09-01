@@ -73,10 +73,29 @@ def run_epoch(model, loader, dev, is_pair, crit=None, opt=None):
         if train:
             opt.zero_grad(); loss.backward(); opt.step()
         tot += loss.item() * y.size(0)
-        ys.append(y.cpu().numpy()); ps.append(logits.argmax(1).cpu().numpy())
-    y_true = np.concatenate(ys); y_pred = np.concatenate(ps)
+        ys.append(y.cpu().numpy())
+        ps.append(torch.softmax(logits, 1).detach().cpu().numpy())
+    y_true = np.concatenate(ys); probs = np.concatenate(ps)
+    y_pred = probs.argmax(1)
     acc = (y_true == y_pred).mean()
-    return tot / len(y_true), acc, y_true, y_pred
+    return tot / len(y_true), acc, y_true, y_pred, probs
+
+
+CONF_IDX = CLASSES.index("Conforme")
+
+
+def conforme_recall_at_precision(probs, y_true, target_p=0.95):
+    """Meilleur rappel Conforme atteignable avec précision >= target_p (0 si aucun)."""
+    pc = probs[:, CONF_IDX]; is_c = (y_true == CONF_IDX)
+    best_r = 0.0
+    for thr in np.linspace(0.30, 0.99, 70):
+        pred = pc >= thr
+        tp = np.sum(pred & is_c); fp = np.sum(pred & ~is_c); fn = np.sum(~pred & is_c)
+        prec = tp / (tp + fp) if (tp + fp) else 0.0
+        rec = tp / (tp + fn) if (tp + fn) else 0.0
+        if prec >= target_p:
+            best_r = max(best_r, rec)
+    return best_r
 
 
 def main(a):
@@ -101,28 +120,37 @@ def main(a):
     dl_tr = DataLoader(ds_tr, batch_size=a.batch, shuffle=True, num_workers=a.workers)
     dl_va = DataLoader(ds_va, batch_size=a.batch, shuffle=False, num_workers=a.workers)
 
-    model = build_model(a.model).to(dev)
-    crit = nn.CrossEntropyLoss(weight=class_weights(labels).to(dev))
+    model = build_model(a.model, backbone=a.backbone).to(dev)
+    crit = nn.CrossEntropyLoss(weight=class_weights(labels).to(dev),
+                               label_smoothing=a.label_smoothing)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=a.epochs)
 
     mlflow.set_experiment("castagnet")
-    with mlflow.start_run(run_name=a.model):
-        mlflow.log_params({"model": a.model, "epochs": a.epochs, "batch": a.batch,
-                           "lr": a.lr, "device": str(dev),
-                           "n_train": len(tr), "subset": a.subset or 0})
-        best = 0.0
+    with mlflow.start_run(run_name=f"{a.model}_{a.backbone}"):
+        mlflow.log_params({"model": a.model, "backbone": a.backbone,
+                           "epochs": a.epochs, "batch": a.batch, "lr": a.lr,
+                           "scheduler": "cosine", "label_smoothing": a.label_smoothing,
+                           "device": str(dev), "n_train": len(tr), "subset": a.subset or 0})
+        best = -1.0
         for ep in range(1, a.epochs + 1):
             trl, tra, *_ = run_epoch(model, dl_tr, dev, is_pair, crit, opt)
-            vl, vacc, yt, yp = run_epoch(model, dl_va, dev, is_pair, crit)
+            vl, vacc, yt, yp, vprobs = run_epoch(model, dl_va, dev, is_pair, crit)
+            sched.step()
             met, cm = per_class_metrics(yt, yp)
             pc, rc = met["Conforme"]
+            # objectif métier : rappel Conforme atteignable à précision >= 95 %
+            r_at_p95 = conforme_recall_at_precision(vprobs, yt)
             mlflow.log_metrics({"train_loss": trl, "train_acc": tra,
                                 "val_loss": vl, "val_acc": vacc,
-                                "conforme_precision": pc, "conforme_recall": rc}, step=ep)
-            print(f"ep{ep}: train_acc={tra:.3f} val_acc={vacc:.3f} | "
-                  f"Conforme P={pc:.3f} R={rc:.3f}")
-            if vacc > best:
-                best = vacc
+                                "conforme_precision": pc, "conforme_recall": rc,
+                                "conforme_recall_at_p95": r_at_p95,
+                                "lr": sched.get_last_lr()[0]}, step=ep)
+            print(f"ep{ep}: val_acc={vacc:.3f} | Conforme R@P95={r_at_p95:.3f} "
+                  f"(argmax P={pc:.3f} R={rc:.3f})")
+            # on sauve le modèle qui maximise l'objectif métier
+            if r_at_p95 > best:
+                best = r_at_p95
                 torch.save(model.state_dict(),
                            os.path.join(ROOT, f"best_{a.model}.pt"))
         # matrice de confusion finale
@@ -130,16 +158,20 @@ def main(a):
         print("        " + "  ".join(f"{c[:6]:>6}" for c in CLASSES))
         for i, c in enumerate(CLASSES):
             print(f"{c[:8]:>8} " + "  ".join(f"{cm[i,j]:6d}" for j in range(len(CLASSES))))
-        mlflow.log_metric("best_val_acc", best)
-    print(f"\nMeilleure val_acc : {best:.3f}  (modèle sauvé best_{a.model}.pt)")
+        mlflow.log_metric("best_conforme_recall_at_p95", best)
+    print(f"\nMeilleur rappel Conforme @P95 (val) : {best:.3f}  "
+          f"(modèle sauvé best_{a.model}.pt)")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
+    ap.add_argument("--backbone", default="mobilenetv3_small",
+                    choices=["mobilenetv3_small", "mobilenetv3_large"])
     ap.add_argument("--epochs", type=int, default=8)
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--label-smoothing", type=float, default=0.05, dest="label_smoothing")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--subset", type=int, default=0, help="limiter le train (sanity)")
     main(ap.parse_args())
