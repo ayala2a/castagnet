@@ -1,0 +1,51 @@
+=== SIMPLECNN mar.  1 sept. 2026 10:16:25 CEST ===
+ep1: train_acc=0.516 val_acc=0.544 | Conforme P=0.798 R=0.551
+ep2: train_acc=0.589 val_acc=0.210 | Conforme P=0.000 R=0.000
+ep3: train_acc=0.606 val_acc=0.633 | Conforme P=0.737 R=0.753
+ep4: train_acc=0.615 val_acc=0.616 | Conforme P=0.710 R=0.723
+ep5: train_acc=0.628 val_acc=0.607 | Conforme P=0.794 R=0.670
+ep6: train_acc=0.636 val_acc=0.614 | Conforme P=0.811 R=0.652
+ep7: train_acc=0.639 val_acc=0.493 | Conforme P=0.972 R=0.188
+ep8: train_acc=0.641 val_acc=0.655 | Conforme P=0.817 R=0.685
+ep9: train_acc=0.645 val_acc=0.600 | Conforme P=0.730 R=0.775
+ep10: train_acc=0.649 val_acc=0.611 | Conforme P=0.627 R=0.838
+ep11: train_acc=0.651 val_acc=0.653 | Conforme P=0.721 R=0.805
+ep12: train_acc=0.653 val_acc=0.635 | Conforme P=0.662 R=0.832
+ep13: train_acc=0.657 val_acc=0.604 | Conforme P=0.589 R=0.867
+ep14: train_acc=0.656 val_acc=0.582 | Conforme P=0.568 R=0.852
+ep15: train_acc=0.654 val_acc=0.659 | Conforme P=0.744 R=0.795
+
+Matrice de confusion (val) — lignes=vrai, colonnes=prédit :
+        Confor  NON Co  PIETRA    Vide
+Conforme   1490      60      39     285
+NON Conf    101     701      16     248
+  PIETRA    407     266     194     365
+    Vide      5       2       2    1086
+
+Meilleure val_acc : 0.659  (modèle sauvé best_simplecnn.pt)
+=== DUALBRANCH mar.  1 sept. 2026 10:45:28 CEST ===
+ep1: train_acc=0.751 val_acc=0.778 | Conforme P=0.938 R=0.647
+ep2: train_acc=0.825 val_acc=0.799 | Conforme P=0.938 R=0.736
+ep3: train_acc=0.847 val_acc=0.773 | Conforme P=0.980 R=0.601
+ep4: train_acc=0.855 val_acc=0.861 | Conforme P=0.934 R=0.845
+ep5: train_acc=0.870 val_acc=0.802 | Conforme P=0.897 R=0.714
+ep6: train_acc=0.871 val_acc=0.774 | Conforme P=0.981 R=0.585
+ep7: train_acc=0.878 val_acc=0.752 | Conforme P=0.971 R=0.525
+ep8: train_acc=0.884 val_acc=0.829 | Conforme P=0.960 R=0.772
+ep9: train_acc=0.887 val_acc=0.866 | Conforme P=0.920 R=0.847
+ep10: train_acc=0.894 val_acc=0.853 | Conforme P=0.906 R=0.818
+ep11: train_acc=0.897 val_acc=0.823 | Conforme P=0.851 R=0.864
+ep12: train_acc=0.897 val_acc=0.766 | Conforme P=0.980 R=0.554
+ep13: train_acc=0.898 val_acc=0.863 | Conforme P=0.934 R=0.842
+ep14: train_acc=0.903 val_acc=0.826 | Conforme P=0.910 R=0.863
+ep15: train_acc=0.905 val_acc=0.811 | Conforme P=0.772 R=0.934
+
+Matrice de confusion (val) — lignes=vrai, colonnes=prédit :
+        Confor  NON Co  PIETRA    Vide
+Conforme    996       3      58       9
+NON Conf     94     316     109      22
+  PIETRA    199      19     400      21
+    Vide      1       1       4     610
+
+Meilleure val_acc : 0.866  (modèle sauvé best_dualbranch.pt)
+=== DONE mar.  1 sept. 2026 11:10:12 CEST ===
