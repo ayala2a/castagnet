@@ -23,19 +23,20 @@ from models import build_model
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def export(model_name, out_path, backbone="mobilenetv3_small"):
+def export(model_name, out_path, backbone="mobilenetv3_small", img_size=224):
     model = build_model(model_name, pretrained=False, backbone=backbone)
     ckpt = os.path.join(ROOT, f"best_{model_name}.pt")
     if os.path.exists(ckpt):
         model.load_state_dict(torch.load(ckpt, map_location="cpu"))
     model.eval()
 
+    s = img_size
     if model_name == "dualbranch":
-        dummy = (torch.randn(1, 3, 224, 224), torch.randn(1, 3, 224, 224))
+        dummy = (torch.randn(1, 3, s, s), torch.randn(1, 3, s, s))
         names = ["view_t", "view_b"]
         dyn = {"view_t": {0: "batch"}, "view_b": {0: "batch"}, "logits": {0: "batch"}}
     else:
-        dummy = (torch.randn(1, 3, 224, 224),)
+        dummy = (torch.randn(1, 3, s, s),)
         names = ["image"]
         dyn = {"image": {0: "batch"}, "logits": {0: "batch"}}
 
@@ -78,7 +79,7 @@ def bench(sess, names, batches=(1, 12, 24), n=100, warm=10):
 
 def main(a):
     onnx_path = os.path.join(ROOT, f"model_{a.model}.onnx")
-    model, dummy, names = export(a.model, onnx_path, backbone=a.backbone)
+    model, dummy, names = export(a.model, onnx_path, backbone=a.backbone, img_size=a.img_size)
     sess = verify(model, dummy, names, onnx_path)
     res = bench(sess, names)
 
@@ -99,4 +100,5 @@ if __name__ == "__main__":
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
     ap.add_argument("--backbone", default="mobilenetv3_small",
                     choices=["mobilenetv3_small", "mobilenetv3_large"])
+    ap.add_argument("--img-size", type=int, default=224, dest="img_size")
     main(ap.parse_args())

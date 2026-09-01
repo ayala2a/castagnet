@@ -106,15 +106,21 @@ def main(a):
 
     if is_pair:
         tr, va = ch[ch.split == "train"], ch[ch.split == "val"]
+        if a.drop_ambiguous:  # nettoie le TRAIN seulement (val/test restent représentatifs)
+            n0 = len(tr)
+            tr = tr[~(tr["multiple"] | tr["chunk"])]
+            print(f"drop-ambiguous : train {n0} -> {len(tr)} (exclut chunk/multiple)")
         if a.subset:
             tr = tr.sample(min(a.subset, len(tr)), random_state=0)
-        ds_tr, ds_va = PairDataset(tr, train=True), PairDataset(va)
+        ds_tr = PairDataset(tr, train=True, img_size=a.img_size)
+        ds_va = PairDataset(va, img_size=a.img_size)
         labels = tr["label_chestnut"].map({c: i for i, c in enumerate(CLASSES)}).values
     else:
         tr, va = im[im.split == "train"], im[im.split == "val"]
         if a.subset:
             tr = tr.sample(min(a.subset, len(tr)), random_state=0)
-        ds_tr, ds_va = ImageDataset(tr, train=True), ImageDataset(va)
+        ds_tr = ImageDataset(tr, train=True, img_size=a.img_size)
+        ds_va = ImageDataset(va, img_size=a.img_size)
         labels = tr["label"].map({c: i for i, c in enumerate(CLASSES)}).values
 
     dl_tr = DataLoader(ds_tr, batch_size=a.batch, shuffle=True, num_workers=a.workers)
@@ -131,6 +137,7 @@ def main(a):
         mlflow.log_params({"model": a.model, "backbone": a.backbone,
                            "epochs": a.epochs, "batch": a.batch, "lr": a.lr,
                            "scheduler": "cosine", "label_smoothing": a.label_smoothing,
+                           "img_size": a.img_size, "drop_ambiguous": a.drop_ambiguous,
                            "device": str(dev), "n_train": len(tr), "subset": a.subset or 0})
         best = -1.0
         for ep in range(1, a.epochs + 1):
@@ -172,6 +179,9 @@ if __name__ == "__main__":
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--label-smoothing", type=float, default=0.05, dest="label_smoothing")
+    ap.add_argument("--img-size", type=int, default=224, dest="img_size")
+    ap.add_argument("--drop-ambiguous", action="store_true", dest="drop_ambiguous",
+                    help="exclut chunk/multiple du TRAIN (val/test intacts)")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--subset", type=int, default=0, help="limiter le train (sanity)")
     main(ap.parse_args())

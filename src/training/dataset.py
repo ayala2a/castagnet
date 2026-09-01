@@ -58,27 +58,28 @@ def _to_tensor(bgr, train):
     return torch.from_numpy(rgb.transpose(2, 0, 1)).float()
 
 
-def _load(filename):
+def _load(filename, size=224):
     path = os.path.join(IMAGES_DIR, filename)
     img = cv2.imread(path)
     if img is None:
-        return np.zeros((224, 224, 3), np.uint8)
-    return _circular_preprocess(img)
+        return np.zeros((size, size, 3), np.uint8)
+    return _circular_preprocess(img, size=size)
 
 
 class ImageDataset(Dataset):
     """Baseline mono-vue : renvoie (image, label)."""
 
-    def __init__(self, df, train=False):
+    def __init__(self, df, train=False, img_size=224):
         self.df = df.reset_index(drop=True)
         self.train = train
+        self.img_size = img_size
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, i):
         r = self.df.iloc[i]
-        x = _to_tensor(_load(r["filename"]), self.train)
+        x = _to_tensor(_load(r["filename"], self.img_size), self.train)
         return x, CLASS_TO_IDX[r["label"]]
 
 
@@ -89,17 +90,18 @@ class PairDataset(Dataset):
     hors-cercle un fond noir, donc une vue absente = 'rien vu de ce côté').
     """
 
-    def __init__(self, df, train=False):
+    def __init__(self, df, train=False, img_size=224):
         self.df = df.reset_index(drop=True)
         self.train = train
+        self.img_size = img_size
 
     def __len__(self):
         return len(self.df)
 
     def _view(self, filename):
         if isinstance(filename, str) and filename:
-            return _to_tensor(_load(filename), self.train)
-        return torch.zeros(3, 224, 224)
+            return _to_tensor(_load(filename, self.img_size), self.train)
+        return torch.zeros(3, self.img_size, self.img_size)
 
     def __getitem__(self, i):
         r = self.df.iloc[i]

@@ -93,19 +93,28 @@ def save_confusion_fig(cm, name):
 def main(a):
     dev = device()
     is_pair = a.model == "dualbranch"
+    # TTA : on active l'augmentation (rotation/flip) et on moyenne plusieurs passes
+    aug = a.tta > 1
     if is_pair:
         df = pd.read_csv(os.path.join(DATA, "splits_chestnut.csv"))
-        ds = PairDataset(df[df.split == "test"])
+        ds = PairDataset(df[df.split == "test"], train=aug, img_size=a.img_size)
     else:
         df = pd.read_csv(os.path.join(DATA, "splits_image.csv"))
-        ds = ImageDataset(df[df.split == "test"])
+        ds = ImageDataset(df[df.split == "test"], train=aug, img_size=a.img_size)
     loader = DataLoader(ds, batch_size=a.batch, num_workers=a.workers)
 
     model = build_model(a.model, pretrained=False, backbone=a.backbone).to(dev)
     ckpt = os.path.join(ROOT, f"best_{a.model}.pt")
     model.load_state_dict(torch.load(ckpt, map_location=dev))
 
+    passes = max(1, a.tta)
     probs, y_true = predict(model, loader, dev, is_pair)
+    for _ in range(passes - 1):  # TTA : cumule des vues augmentées
+        p2, _ = predict(model, loader, dev, is_pair)
+        probs = probs + p2
+    probs = probs / passes
+    if passes > 1:
+        print(f"(TTA : moyenne sur {passes} vues augmentées)")
     y_pred = probs.argmax(1)
     cm = confusion(y_true, y_pred)
     save_confusion_fig(cm, a.model)
@@ -136,6 +145,8 @@ if __name__ == "__main__":
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
     ap.add_argument("--backbone", default="mobilenetv3_small",
                     choices=["mobilenetv3_small", "mobilenetv3_large"])
+    ap.add_argument("--img-size", type=int, default=224, dest="img_size")
+    ap.add_argument("--tta", type=int, default=1, help="nb de vues augmentées (1 = off)")
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--workers", type=int, default=4)
     main(ap.parse_args())
