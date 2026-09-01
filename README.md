@@ -61,10 +61,14 @@ python src/data/quality_report.py   # -> reports/figures/*.png, reports/quality_
 ## Feuille de route
 
 - [x] **§4.1** Appariement T/B + rapport qualité actualisé (par châtaigne)
-- [ ] **§4.1** Extraction vidéo (2×750 frames) + crop autour des fruits
-- [ ] **§4.1** Terminer les 270 relectures restantes
-- [ ] **§4.2** Splits groupés anti-leak + CNN maison (baseline) + CNN dual-input T/B + MLflow
-- [ ] **§4.3** Export ONNX + mesure de latence vs 12 flux (cible GTX 1060 3 Go)
+- [x] **§4.1** Extraction vidéo (2×750 frames) + crop circulaire des fruits
+- [x] **§4.1** Relectures terminées (100 %)
+- [x] **§4.2** Splits groupés anti-leak + CNN maison + dual-branch T/B (fusion |T−B|) + MLflow
+- [x] **§4.2** Cible cahier des charges atteinte (Conforme P=0,953 / R=0,884 sur test)
+- [x] **§4.3** Export ONNX vérifié + latence + analyse 12 flux
+- [x] **Rapport final** : `reports/RAPPORT_FINAL.md`
+
+Modèle retenu : dual-branch MobileNetV3-Large, fusion `[T, B, |T−B|]`, + TTA.
 
 ## Contraintes cahier des charges (Annexe A)
 
