@@ -5,16 +5,16 @@
     "NON Conforme": 9169
   },
   "apres_label_principal": {
-    "Vide": 12561,
-    "Conforme": 10836,
-    "PIETRA": 6198,
-    "NON Conforme": 5659
+    "Vide": 12730,
+    "Conforme": 10864,
+    "PIETRA": 5942,
+    "NON Conforme": 5718
   },
   "par_chataigne": {
-    "Conforme": 7093,
-    "PIETRA": 4399,
-    "Vide": 4005,
-    "NON Conforme": 3581
+    "Conforme": 7110,
+    "PIETRA": 4256,
+    "Vide": 4106,
+    "NON Conforme": 3606
   },
   "par_annee": {
     "2025": {
@@ -24,10 +24,10 @@
       "Vide": 6470
     },
     "2026": {
-      "Conforme": 3230,
-      "NON Conforme": 2065,
-      "PIETRA": 3602,
-      "Vide": 6091
+      "Conforme": 3258,
+      "NON Conforme": 2124,
+      "PIETRA": 3346,
+      "Vide": 6260
     }
   },
   "par_camera": {
@@ -62,42 +62,45 @@
       "Vide": 2219
     },
     "6": {
-      "Conforme": 1546,
-      "NON Conforme": 694,
-      "PIETRA": 1018,
-      "Vide": 2370
+      "Conforme": 1574,
+      "NON Conforme": 753,
+      "PIETRA": 762,
+      "Vide": 2539
     }
   },
   "combinaisons_TB": {
-    "Vide+Vide": 3082,
+    "Vide+Vide": 3162,
     "Conforme+Conforme": 3743,
-    "Conforme+Vide": 1763,
+    "Conforme+Vide": 1778,
     "NON Conforme+NON Conforme": 2078,
-    "NON Conforme+Vide": 1422,
-    "PIETRA+Vide": 2289,
-    "PIETRA+PIETRA": 1799
+    "NON Conforme+Vide": 1440,
+    "PIETRA+Vide": 2244,
+    "PIETRA+PIETRA": 1686,
+    "Conforme+PIETRA": 11,
+    "NON Conforme+PIETRA": 34
   },
   "desaccords_TB": {
-    "total": 5474,
-    "avec_Vide": 5474,
-    "conflits_reels": 0
+    "total": 5507,
+    "avec_Vide": 5462,
+    "conflits_reels": 45
   },
   "labeled_by": {
     "NicoG": 12018,
     "Tilyah": 11080,
-    "(non tracé)": 8033,
+    "(non tracé)": 7763,
     "nico": 2000,
     "nico h": 1000,
     "auto_empty_v1": 596,
     "Nico": 500,
+    "caballero": 270,
     "popas1": 27
   },
-  "reviewed_true": 34984,
-  "reviewed_false": 270,
+  "reviewed_true": 35254,
+  "reviewed_false": 0,
   "reviewed_sans_auteur": 7763,
   "tags": {
     "multiple": 1197,
-    "chunk": 4975,
+    "chunk": 4978,
     "mixed_quality": 0
   },
   "masked": {
