@@ -27,3 +27,15 @@ ep25: val_acc=0.898 | Conforme R@P95=0.851 (argmax P=0.923 R=0.897)
 ep26: val_acc=0.894 | Conforme R@P95=0.850 (argmax P=0.934 R=0.878)
 ep27: val_acc=0.893 | Conforme R@P95=0.848 (argmax P=0.938 R=0.869)
 ep28: val_acc=0.899 | Conforme R@P95=0.852 (argmax P=0.928 R=0.892)
+ep29: val_acc=0.896 | Conforme R@P95=0.848 (argmax P=0.931 R=0.882)
+ep30: val_acc=0.894 | Conforme R@P95=0.850 (argmax P=0.934 R=0.877)
+
+Matrice de confusion (val) — lignes=vrai, colonnes=prédit :
+        Confor  NON Co  PIETRA    Vide
+Conforme    935       8     120       3
+NON Conf     21     466      50       4
+  PIETRA     42      40     553       4
+    Vide      3       3       4     606
+
+Meilleur rappel Conforme @P95 (val) : 0.867  (modèle sauvé best_dualbranch.pt)
+=== DONE mar.  1 sept. 2026 17:27:50 CEST ===

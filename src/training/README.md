@@ -11,3 +11,4 @@ mlflow ui                                    # tableau de bord des expériences
 
 Justification de tous les choix : `../../reports/choix_justifies.md`.
 À venir : `evaluate.py` (calibration seuil Conforme P≥95 %/R≥85 %) et `export_onnx.py` (+ latence).
+onnxscript  # export ONNX torch 2.13+

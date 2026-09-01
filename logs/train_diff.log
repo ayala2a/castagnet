@@ -1,0 +1,42 @@
+v2-full fini -> sauvegarde de son checkpoint
+=== FUSION concat_diff mar.  1 sept. 2026 17:27:59 CEST ===
+ep1: val_acc=0.841 | Conforme R@P95=0.687 (argmax P=0.880 R=0.878)
+ep2: val_acc=0.842 | Conforme R@P95=0.627 (argmax P=0.773 R=0.964)
+ep3: val_acc=0.853 | Conforme R@P95=0.774 (argmax P=0.934 R=0.809)
+ep4: val_acc=0.876 | Conforme R@P95=0.770 (argmax P=0.886 R=0.912)
+ep5: val_acc=0.877 | Conforme R@P95=0.817 (argmax P=0.913 R=0.897)
+ep6: val_acc=0.773 | Conforme R@P95=0.714 (argmax P=0.983 R=0.636)
+ep7: val_acc=0.862 | Conforme R@P95=0.827 (argmax P=0.955 R=0.812)
+ep8: val_acc=0.786 | Conforme R@P95=0.520 (argmax P=0.864 R=0.737)
+ep9: val_acc=0.886 | Conforme R@P95=0.780 (argmax P=0.853 R=0.951)
+ep10: val_acc=0.812 | Conforme R@P95=0.699 (argmax P=0.980 R=0.644)
+ep11: val_acc=0.895 | Conforme R@P95=0.883 (argmax P=0.941 R=0.892)
+ep12: val_acc=0.894 | Conforme R@P95=0.827 (argmax P=0.909 R=0.914)
+ep13: val_acc=0.880 | Conforme R@P95=0.825 (argmax P=0.936 R=0.866)
+ep14: val_acc=0.870 | Conforme R@P95=0.826 (argmax P=0.942 R=0.852)
+ep15: val_acc=0.889 | Conforme R@P95=0.811 (argmax P=0.920 R=0.877)
+ep16: val_acc=0.886 | Conforme R@P95=0.866 (argmax P=0.950 R=0.857)
+ep17: val_acc=0.823 | Conforme R@P95=0.803 (argmax P=0.972 R=0.741)
+ep18: val_acc=0.901 | Conforme R@P95=0.867 (argmax P=0.946 R=0.876)
+ep19: val_acc=0.885 | Conforme R@P95=0.853 (argmax P=0.954 R=0.831)
+ep20: val_acc=0.888 | Conforme R@P95=0.807 (argmax P=0.944 R=0.846)
+ep21: val_acc=0.904 | Conforme R@P95=0.858 (argmax P=0.944 R=0.881)
+ep22: val_acc=0.892 | Conforme R@P95=0.864 (argmax P=0.953 R=0.839)
+ep23: val_acc=0.887 | Conforme R@P95=0.804 (argmax P=0.939 R=0.846)
+ep24: val_acc=0.890 | Conforme R@P95=0.853 (argmax P=0.954 R=0.832)
+ep25: val_acc=0.896 | Conforme R@P95=0.839 (argmax P=0.944 R=0.858)
+ep26: val_acc=0.894 | Conforme R@P95=0.844 (argmax P=0.948 R=0.847)
+ep27: val_acc=0.890 | Conforme R@P95=0.850 (argmax P=0.959 R=0.827)
+ep28: val_acc=0.890 | Conforme R@P95=0.848 (argmax P=0.952 R=0.826)
+ep29: val_acc=0.894 | Conforme R@P95=0.833 (argmax P=0.945 R=0.844)
+ep30: val_acc=0.894 | Conforme R@P95=0.842 (argmax P=0.948 R=0.845)
+
+Matrice de confusion (val) — lignes=vrai, colonnes=prédit :
+        Confor  NON Co  PIETRA    Vide
+Conforme    901       9     150       6
+NON Conf     16     476      44       5
+  PIETRA     32      27     576       4
+    Vide      1       3       6     606
+
+Meilleur rappel Conforme @P95 (val) : 0.883  (modèle sauvé best_dualbranch_diff.pt)
+=== DONE mar.  1 sept. 2026 19:00:05 CEST ===
