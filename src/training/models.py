@@ -72,7 +72,12 @@ class DualBranchNet(nn.Module):
         self.enc_t, feat = _backbone(backbone, pretrained)
         self.enc_b = self.enc_t if shared else _backbone(backbone, pretrained)[0]
         self.fusion = fusion
-        fused = feat * 2 if fusion == "concat" else feat
+        if fusion == "concat_diff":     # [T, B, |T-B|] : donne l'asymétrie des vues
+            fused = feat * 3
+        elif fusion == "concat":        # [T, B]
+            fused = feat * 2
+        else:                            # "sum" : T + B
+            fused = feat
         self.head = nn.Sequential(
             nn.Dropout(0.3), nn.Linear(fused, 256), nn.ReLU(inplace=True),
             nn.Dropout(0.3), nn.Linear(256, num_classes),
@@ -80,13 +85,18 @@ class DualBranchNet(nn.Module):
 
     def forward(self, xt, xb):
         ft, fb = self.enc_t(xt), self.enc_b(xb)
-        z = torch.cat([ft, fb], 1) if self.fusion == "concat" else (ft + fb)
+        if self.fusion == "concat_diff":
+            z = torch.cat([ft, fb, (ft - fb).abs()], 1)
+        elif self.fusion == "concat":
+            z = torch.cat([ft, fb], 1)
+        else:
+            z = ft + fb
         return self.head(z)
 
 
-def build_model(name, pretrained=True, backbone="mobilenetv3_small"):
+def build_model(name, pretrained=True, backbone="mobilenetv3_small", fusion="concat"):
     if name == "simplecnn":
         return SimpleCNN()
     if name == "dualbranch":
-        return DualBranchNet(pretrained=pretrained, backbone=backbone)
+        return DualBranchNet(pretrained=pretrained, backbone=backbone, fusion=fusion)
     raise ValueError(f"modèle inconnu : {name}")

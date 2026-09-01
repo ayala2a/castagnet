@@ -103,8 +103,8 @@ def main(a):
         ds = ImageDataset(df[df.split == "test"], train=aug, img_size=a.img_size)
     loader = DataLoader(ds, batch_size=a.batch, num_workers=a.workers)
 
-    model = build_model(a.model, pretrained=False, backbone=a.backbone).to(dev)
-    ckpt = os.path.join(ROOT, f"best_{a.model}.pt")
+    model = build_model(a.model, pretrained=False, backbone=a.backbone, fusion=a.fusion).to(dev)
+    ckpt = os.path.join(ROOT, f"best_{a.model}{a.tag}.pt")
     model.load_state_dict(torch.load(ckpt, map_location=dev))
 
     passes = max(1, a.tta)
@@ -145,6 +145,9 @@ if __name__ == "__main__":
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
     ap.add_argument("--backbone", default="mobilenetv3_small",
                     choices=["mobilenetv3_small", "mobilenetv3_large"])
+    ap.add_argument("--fusion", default="concat",
+                    choices=["concat", "sum", "concat_diff"])
+    ap.add_argument("--tag", default="", help="suffixe du checkpoint à charger")
     ap.add_argument("--img-size", type=int, default=224, dest="img_size")
     ap.add_argument("--tta", type=int, default=1, help="nb de vues augmentées (1 = off)")
     ap.add_argument("--batch", type=int, default=64)

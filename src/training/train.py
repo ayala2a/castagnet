@@ -126,7 +126,7 @@ def main(a):
     dl_tr = DataLoader(ds_tr, batch_size=a.batch, shuffle=True, num_workers=a.workers)
     dl_va = DataLoader(ds_va, batch_size=a.batch, shuffle=False, num_workers=a.workers)
 
-    model = build_model(a.model, backbone=a.backbone).to(dev)
+    model = build_model(a.model, backbone=a.backbone, fusion=a.fusion).to(dev)
     crit = nn.CrossEntropyLoss(weight=class_weights(labels).to(dev),
                                label_smoothing=a.label_smoothing)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
@@ -138,6 +138,7 @@ def main(a):
                            "epochs": a.epochs, "batch": a.batch, "lr": a.lr,
                            "scheduler": "cosine", "label_smoothing": a.label_smoothing,
                            "img_size": a.img_size, "drop_ambiguous": a.drop_ambiguous,
+                           "fusion": a.fusion,
                            "device": str(dev), "n_train": len(tr), "subset": a.subset or 0})
         best = -1.0
         for ep in range(1, a.epochs + 1):
@@ -159,7 +160,7 @@ def main(a):
             if r_at_p95 > best:
                 best = r_at_p95
                 torch.save(model.state_dict(),
-                           os.path.join(ROOT, f"best_{a.model}.pt"))
+                           os.path.join(ROOT, f"best_{a.model}{a.tag}.pt"))
         # matrice de confusion finale
         print("\nMatrice de confusion (val) — lignes=vrai, colonnes=prédit :")
         print("        " + "  ".join(f"{c[:6]:>6}" for c in CLASSES))
@@ -167,7 +168,7 @@ def main(a):
             print(f"{c[:8]:>8} " + "  ".join(f"{cm[i,j]:6d}" for j in range(len(CLASSES))))
         mlflow.log_metric("best_conforme_recall_at_p95", best)
     print(f"\nMeilleur rappel Conforme @P95 (val) : {best:.3f}  "
-          f"(modèle sauvé best_{a.model}.pt)")
+          f"(modèle sauvé best_{a.model}{a.tag}.pt)")
 
 
 if __name__ == "__main__":
@@ -175,6 +176,9 @@ if __name__ == "__main__":
     ap.add_argument("--model", choices=["simplecnn", "dualbranch"], default="dualbranch")
     ap.add_argument("--backbone", default="mobilenetv3_small",
                     choices=["mobilenetv3_small", "mobilenetv3_large"])
+    ap.add_argument("--fusion", default="concat",
+                    choices=["concat", "sum", "concat_diff"])
+    ap.add_argument("--tag", default="", help="suffixe du checkpoint (évite les collisions)")
     ap.add_argument("--epochs", type=int, default=8)
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-4)

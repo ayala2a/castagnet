@@ -23,9 +23,10 @@ from models import build_model
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def export(model_name, out_path, backbone="mobilenetv3_small", img_size=224):
-    model = build_model(model_name, pretrained=False, backbone=backbone)
-    ckpt = os.path.join(ROOT, f"best_{model_name}.pt")
+def export(model_name, out_path, backbone="mobilenetv3_small", img_size=224,
+           fusion="concat", tag=""):
+    model = build_model(model_name, pretrained=False, backbone=backbone, fusion=fusion)
+    ckpt = os.path.join(ROOT, f"best_{model_name}{tag}.pt")
     if os.path.exists(ckpt):
         model.load_state_dict(torch.load(ckpt, map_location="cpu"))
     model.eval()
@@ -79,7 +80,8 @@ def bench(sess, names, batches=(1, 12, 24), n=100, warm=10):
 
 def main(a):
     onnx_path = os.path.join(ROOT, f"model_{a.model}.onnx")
-    model, dummy, names = export(a.model, onnx_path, backbone=a.backbone, img_size=a.img_size)
+    model, dummy, names = export(a.model, onnx_path, backbone=a.backbone,
+                                 img_size=a.img_size, fusion=a.fusion, tag=a.tag)
     sess = verify(model, dummy, names, onnx_path)
     res = bench(sess, names)
 
@@ -101,4 +103,7 @@ if __name__ == "__main__":
     ap.add_argument("--backbone", default="mobilenetv3_small",
                     choices=["mobilenetv3_small", "mobilenetv3_large"])
     ap.add_argument("--img-size", type=int, default=224, dest="img_size")
+    ap.add_argument("--fusion", default="concat",
+                    choices=["concat", "sum", "concat_diff"])
+    ap.add_argument("--tag", default="", help="suffixe du checkpoint à charger")
     main(ap.parse_args())
