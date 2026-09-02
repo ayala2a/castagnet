@@ -38,11 +38,24 @@ castagnet/
 └── notebooks/
 ```
 
-## Données sources
+## Données sources & confidentialité
 
-Le dataset (images + labels) vit dans le dépôt voisin `castagnia_data-main/`
-(35 254 images suivies par DVC, `labels_principal.csv`, `labels_masked.csv`). Ce
-dépôt-ci n'y touche pas ; il consomme les CSV en lecture.
+Le dataset (images + labels) appartient au projet CastagnIA / GRPTMC. Pour préserver
+la confidentialité des données du client, **les CSV de labels ne sont pas publiés**
+ici (`data/*.csv` est ignoré). Ils sont **entièrement régénérables** à partir du
+dataset via les scripts fournis :
+
+```bash
+python src/data/build_pairs.py      # -> data/pairs_TB.csv, data/labels_chestnut.csv
+python src/training/make_splits.py  # -> data/splits_*.csv
+```
+
+## Modèle entraîné
+
+Le modèle final est fourni au format ONNX, en **deux fichiers à garder ensemble** :
+`model_dualbranch.onnx` (graphe) + `model_dualbranch.onnx.data` (poids). Voir aussi
+la **Release** du dépôt pour le télécharger directement. Inférence :
+`python src/training/predict.py --t vue_dessus.jpg --b vue_dessous.jpg`.
 
 ## Installation
 
