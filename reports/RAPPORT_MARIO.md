@@ -75,6 +75,18 @@ J'ai aussi récupéré des images depuis les vidéos de la machine : découpage 
 détection du créneau circulaire, crop autour de chaque châtaigne — de quoi enrichir le
 dataset au même format que les images existantes.
 
+Il y avait deux vidéos, une vue du haut et une vue du bas de la même châtaigne, mais
+avec un micro-décalage : elles ne démarrent pas exactement au même instant. Pour les
+apparier, je ne me suis pas fié à l'œil, j'ai mesuré le décalage. J'ai détecté la
+séquence des passages de châtaignes dans chaque vidéo, et j'ai remarqué qu'elles avaient
+exactement la même cadence — une châtaigne toutes les 27 frames — donc c'était bien le
+même flux. En alignant les deux séquences, je trouve un décalage de 5 frames (0,2 s), la
+vue du bas étant en avance sur celle du haut. À partir de là, la règle est simple : une
+châtaigne à la frame N dans une vidéo correspond à la frame N+5 dans l'autre. J'ai
+vérifié une paire à l'écran pour être sûr — c'est bien le même fruit, avec le même repère
+vert, sous deux angles — et j'ai sorti une vingtaine de paires propres en prenant, pour
+chaque fruit, la frame où il est le mieux visible dans chaque vidéo.
+
 ## L'itération, et ce qui a fini par débloquer
 
 Ma baseline (un petit CNN codé à la main sur une seule image) plafonne vers 66 % et

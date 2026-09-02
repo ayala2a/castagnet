@@ -55,10 +55,28 @@ Répartition **par châtaigne** (rééquilibrée vs par image) :
 Conforme 37,3 % · PIETRA 22,3 % · Vide 21,5 % · NON Conforme 18,9 %.
 
 ### 2.2 Extraction vidéo (§4.1)
-Les 2 vidéos (30 s, 750 frames, 720×576) sont le flux brut d'une caméra filmant un
-créneau circulaire. Pipeline `extract_video.py` : frames → détection du cercle
-(HoughCircles) → score de présence → **crop circulaire masqué** (style dataset) →
-déduplication temporelle → **115 châtaignes** extraites.
+Les 2 vidéos (30 s, 750 frames, 720×576) filment le **même créneau sous deux angles**
+(vue « haut » et vue « bas » d'une même châtaigne). Pipeline `extract_video.py` :
+frames → détection du cercle (HoughCircles) → score de présence → **crop circulaire
+masqué** (style dataset) → déduplication temporelle.
+
+**Appariement T/B des vidéos** (`video_pairing.py`) — c'est le point « faire des choix
+et les justifier » du sujet. Les deux vidéos ne sont pas synchronisées : il y a un
+micro-décalage temporel. Méthode retenue :
+1. on détecte la **séquence d'arrivée des châtaignes** dans chaque vidéo (signal de
+   présence « beige/brun » par frame) ;
+2. les deux séquences ont la **même cadence** (27 frames ≈ 1,08 s entre fruits) →
+   c'est bien le même flux ;
+3. l'alignement des deux séquences d'événements donne un **décalage de 5 frames
+   (0,2 s), la vidéo B en avance sur A** (13 paires concordantes, diffs 4-5-6) ;
+4. règle d'appariement : châtaigne à la frame *N* dans B ↔ frame *N+5* dans A ; pour
+   chaque fruit on prend la **meilleure vue** dans une fenêtre ±3 frames de chaque
+   vidéo.
+
+Résultat : **20 paires T/B** issues des vidéos, validées visuellement (même fruit, même
+repère vert, deux angles). Table de correspondance dans `data/video_pairs.csv`. C'est
+la même logique T/B que pour le dataset (§2.1), mais reconstruite par **alignement
+temporel** au lieu de la clé de nom de fichier.
 
 ### 2.3 Découpage train / val / test (anti-fuite)
 `make_splits.py` : **70/15/15**, **stratifié** (classe × année), **groupé par
