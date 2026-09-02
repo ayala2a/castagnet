@@ -13,15 +13,19 @@ Classification automatique de châtaignes sèches par vision — 4 classes
 ## 0. Synthèse (résultat clé)
 
 Le système final — un réseau **dual-branch** (deux vues T/B → une décision) avec
-fusion **`[T, B, |T−B|]`** et **augmentation au test (TTA)** — **respecte le cahier
-des charges** sur le jeu de test :
+fusion **`[T, B, |T−B|]`**, **représentation radiale** (déroulé polaire du disque) et
+**augmentation au test (TTA)** — **respecte le cahier des charges** sur le jeu de test :
 
 | Exigence GRPTMC (Annexe A) | Cible | Obtenu (test) |
 |---|---|---|
-| Précision sur Conforme | ≥ 95 % | **95,3 %** ✅ |
-| Rappel sur Conforme | ≥ 85 % | **88,4 %** ✅ |
-| Accuracy globale (4 classes) | — | 91,3 % |
+| Précision sur Conforme | ≥ 95 % | **95,1 %** ✅ |
+| Rappel sur Conforme | ≥ 85 % | **92,5 %** ✅ |
+| Accuracy globale (4 classes) | — | 92,3 % |
 | Temps réel 12 flux | pas d'accumulation | ✅ (voir §4.3) |
+
+> Le modèle livré (`model_dualbranch.onnx`) est la variante **radiale** : c'est la
+> meilleure (§3.5). La version cartésienne (P=0,953 / R=0,884) reste documentée comme
+> jalon dans le comparatif §3.2.
 
 ---
 
