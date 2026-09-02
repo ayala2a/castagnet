@@ -1,1 +1,36 @@
 === RADIAL mer.  2 sept. 2026 11:04:19 CEST ===
+ep1: val_acc=0.831 | Conforme R@P95=0.715 (argmax P=0.914 R=0.810)
+ep2: val_acc=0.829 | Conforme R@P95=0.641 (argmax P=0.802 R=0.958)
+ep3: val_acc=0.834 | Conforme R@P95=0.796 (argmax P=0.960 R=0.751)
+ep4: val_acc=0.840 | Conforme R@P95=0.836 (argmax P=0.975 R=0.778)
+ep5: val_acc=0.877 | Conforme R@P95=0.858 (argmax P=0.956 R=0.835)
+ep6: val_acc=0.863 | Conforme R@P95=0.860 (argmax P=0.960 R=0.814)
+ep7: val_acc=0.861 | Conforme R@P95=0.837 (argmax P=0.971 R=0.786)
+ep8: val_acc=0.878 | Conforme R@P95=0.861 (argmax P=0.969 R=0.811)
+ep9: val_acc=0.864 | Conforme R@P95=0.824 (argmax P=0.973 R=0.776)
+ep10: val_acc=0.865 | Conforme R@P95=0.861 (argmax P=0.973 R=0.804)
+ep11: val_acc=0.838 | Conforme R@P95=0.785 (argmax P=0.978 R=0.724)
+ep12: val_acc=0.869 | Conforme R@P95=0.846 (argmax P=0.963 R=0.808)
+ep13: val_acc=0.893 | Conforme R@P95=0.880 (argmax P=0.952 R=0.876)
+ep14: val_acc=0.887 | Conforme R@P95=0.868 (argmax P=0.948 R=0.859)
+ep15: val_acc=0.877 | Conforme R@P95=0.862 (argmax P=0.951 R=0.857)
+ep16: val_acc=0.891 | Conforme R@P95=0.882 (argmax P=0.952 R=0.871)
+ep17: val_acc=0.901 | Conforme R@P95=0.891 (argmax P=0.952 R=0.879)
+ep18: val_acc=0.885 | Conforme R@P95=0.861 (argmax P=0.957 R=0.843)
+ep19: val_acc=0.900 | Conforme R@P95=0.890 (argmax P=0.953 R=0.880)
+ep20: val_acc=0.892 | Conforme R@P95=0.879 (argmax P=0.952 R=0.871)
+ep21: val_acc=0.899 | Conforme R@P95=0.882 (argmax P=0.946 R=0.889)
+ep22: val_acc=0.898 | Conforme R@P95=0.885 (argmax P=0.951 R=0.881)
+ep23: val_acc=0.894 | Conforme R@P95=0.886 (argmax P=0.956 R=0.869)
+ep24: val_acc=0.895 | Conforme R@P95=0.882 (argmax P=0.955 R=0.869)
+ep25: val_acc=0.895 | Conforme R@P95=0.882 (argmax P=0.957 R=0.867)
+
+Matrice de confusion (val) — lignes=vrai, colonnes=prédit :
+        Confor  NON Co  PIETRA    Vide
+Conforme    924       7     133       2
+NON Conf     15     448      71       7
+  PIETRA     24      22     587       6
+    Vide      3       3       7     603
+
+Meilleur rappel Conforme @P95 (val) : 0.891  (modèle sauvé best_dualbranch_radial.pt)
+=== DONE mer.  2 sept. 2026 12:23:41 CEST ===

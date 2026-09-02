@@ -159,7 +159,8 @@ qu'à en éprouver la fiabilité.
 | SimpleCNN (baseline) | 0,659 | 0,954 / **0,296** | ❌ |
 | DualBranch `concat` | 0,861 | 0,955 / **0,774** | ❌ (rappel) |
 | DualBranch `concat_diff` (**\|T−B\|**) | 0,896 | 0,951 / 0,873 | ✅ |
-| **`concat_diff` + TTA** (retenu) | **0,913** | **0,953 / 0,884** | ✅ **avec marge** |
+| **`concat_diff` + TTA** | **0,913** | **0,953 / 0,884** | ✅ **avec marge** |
+| **`concat_diff` + TTA + radial** (meilleur) | **0,923** | **0,951 / 0,925** | ✅ **rappel +4 pts** |
 
 ### 3.3 Analyse des erreurs
 - La baseline mono-vue **échoue sur PIETRA** (rappel 0,17) : le défaut n'est souvent
@@ -184,6 +185,28 @@ d'oscillation sur les ~10 premières epochs, puis une **stabilisation** (cosine 
 val_acc autour de 0,90, précision Conforme au-dessus de 0,95, rappel @P95 autour de
 0,85. C'est cette stabilisation tardive qui justifie l'entraînement long et la
 sélection du meilleur epoch sur le rappel @P95 plutôt que sur l'accuracy brute.
+
+### 3.5 Pour aller plus loin : représentation radiale (CNN polaire)
+
+Le sujet suggère qu'une architecture exploitant la **cohérence radiale** (l'info est
+centrée sur le disque) pourrait aider. On a testé la piste sans changer d'architecture,
+juste en changeant la **représentation d'entrée** : le disque est **déroulé en
+coordonnées polaires** (rayon × angle, `cv2.warpPolar`) avant le réseau. Deux effets :
+(a) l'information radiale devient alignée sur un axe, plus facile à exploiter par les
+convolutions ; (b) une **rotation** de la châtaigne devient un simple **décalage
+vertical** → robustesse à l'orientation par construction.
+
+Résultat sur le **jeu de test** (même modèle dual-branch `|T−B|` + TTA, entrée polaire) :
+
+| Modèle | Accuracy | Conforme P / R |
+|---|---|---|
+| Dual-branch cartésien + TTA | 0,913 | 0,953 / 0,884 |
+| **Dual-branch radial (polaire) + TTA** | **0,923** | **0,951 / 0,925** |
+
+Le passage en radial **augmente le rappel Conforme de ~4 points** (0,884 → 0,925) à
+précision équivalente, et améliore aussi PIETRA (0,781 → 0,843). La piste du sujet est
+donc **confirmée** : c'est notre meilleur modèle. Reproductible via l'option `--polar`
+de `train.py` / `evaluate.py`.
 
 ## 4. Export et compatibilité production (C30)
 

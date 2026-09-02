@@ -97,10 +97,10 @@ def main(a):
     aug = a.tta > 1
     if is_pair:
         df = pd.read_csv(os.path.join(DATA, "splits_chestnut.csv"))
-        ds = PairDataset(df[df.split == "test"], train=aug, img_size=a.img_size)
+        ds = PairDataset(df[df.split == "test"], train=aug, img_size=a.img_size, polar=a.polar)
     else:
         df = pd.read_csv(os.path.join(DATA, "splits_image.csv"))
-        ds = ImageDataset(df[df.split == "test"], train=aug, img_size=a.img_size)
+        ds = ImageDataset(df[df.split == "test"], train=aug, img_size=a.img_size, polar=a.polar)
     loader = DataLoader(ds, batch_size=a.batch, num_workers=a.workers)
 
     model = build_model(a.model, pretrained=False, backbone=a.backbone, fusion=a.fusion).to(dev)
@@ -149,6 +149,7 @@ if __name__ == "__main__":
                     choices=["concat", "sum", "concat_diff"])
     ap.add_argument("--tag", default="", help="suffixe du checkpoint à charger")
     ap.add_argument("--img-size", type=int, default=224, dest="img_size")
+    ap.add_argument("--polar", action="store_true", help="représentation radiale (polaire)")
     ap.add_argument("--tta", type=int, default=1, help="nb de vues augmentées (1 = off)")
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--workers", type=int, default=4)

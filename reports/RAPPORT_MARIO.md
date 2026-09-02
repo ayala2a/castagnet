@@ -159,6 +159,19 @@ Un exemple qui résume bien le projet : sur une image dont le nom de fichier dit
 a bien compris que le nom de fichier n'est pas la vérité, et que c'est la vue réelle qui
 compte.
 
+## Une piste en plus : le radial
+
+Le sujet soufflait qu'une approche « radiale » pouvait aider, vu que l'info est centrée
+dans le disque. J'ai voulu tester sans changer tout mon réseau : j'ai juste changé la
+façon de présenter l'image. Au lieu de la donner telle quelle, je **déroule le disque en
+coordonnées polaires** (rayon d'un côté, angle de l'autre). L'idée, c'est que la
+cohérence radiale devient alignée sur un axe, plus simple à attraper pour les
+convolutions ; et bonus, une châtaigne tournée devient juste un décalage dans l'image
+déroulée, donc le modèle s'en fiche de l'orientation. Résultat : sur le test, ça passe la
+précision Conforme à 95 % avec un rappel de 92,5 % — soit **4 points de rappel de plus**
+que ma version standard, à précision égale. C'est finalement mon meilleur modèle, et ça
+confirme l'intuition du sujet.
+
 ## Ce que je retiens
 
 L'apport de ce projet, ce n'est pas d'avoir empilé des couches, c'est d'avoir traduit le
