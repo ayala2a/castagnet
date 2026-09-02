@@ -14,8 +14,9 @@ production (§4.3).
 
 ## Livrables (pour l'évaluation)
 
-- **Rapports** : `reports/RAPPORT_FINAL.md` (structuré) et `reports/RAPPORT_MARIO.md`
-  (démarche), + `quality_report.md`, `choix_justifies.md`, `references_ml.md`.
+- **Rapport PDF** : **`reports/RAPPORT_CastagNet.pdf`** (rapport de projet complet —
+  déroulé, justifications, technologies). Annexes markdown : `RAPPORT_FINAL.md`,
+  `RAPPORT_MARIO.md`, `quality_report.md`, `choix_justifies.md`, `references_ml.md`.
 - **Modèle ONNX** : `model_dualbranch.onnx` + `model_dualbranch.onnx.data` (racine du
   dépôt), aussi téléchargeable dans la **[Release v1.0](../../releases/tag/v1.0)**.
 - **Données & labels** : `data/labels_principal.csv` (mis à jour), `data/pairs_TB.csv`
