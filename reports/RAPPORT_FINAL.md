@@ -200,6 +200,31 @@ cible avec marge : P=0,953 / R=0,884). Si la latence GPU imposait de couper le T
 modèle sans TTA respecte déjà la contrainte (P=0,951 / R=0,873) — c'est l'arbitrage
 précision ↔ latence à trancher sur le matériel cible.
 
+### 4.5 Utilisation (inférence)
+
+Le modèle s'utilise via `src/training/predict.py`, qui charge l'ONNX (onnxruntime, sans
+PyTorch) et classe **une châtaigne à partir de ses deux vues** :
+
+```bash
+source .venv/bin/activate
+
+# à partir des deux images d'une même châtaigne
+python src/training/predict.py --t vue_dessus.jpg --b vue_dessous.jpg
+
+# ou à partir d'un identifiant du dataset (retrouve T et B automatiquement)
+python src/training/predict.py --pairkey 2025_PIETRA_Cam_X_1_100.jpg
+```
+
+Sortie : les probabilités des 4 classes et la décision finale. La classe « Conforme »
+n'est retenue que si sa probabilité dépasse le **seuil calibré (0,64)** ; sinon le fruit
+est écarté — c'est le mécanisme qui garantit la précision exigée. En interne : même
+prétraitement qu'à l'entraînement (center-crop + masque circulaire + normalisation),
+TTA sur quelques rotations, puis application du seuil.
+
+Étapes du traitement d'une châtaigne :
+`2 images (T, B)` → prétraitement disque → backbone partagé → fusion `[T, B, |T−B|]`
+→ tête → probabilités 4 classes → seuil Conforme → **décision**.
+
 ---
 
 ## 5. Traçabilité vers la grille de notation

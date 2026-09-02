@@ -118,12 +118,34 @@ seul passage.
 
 ## La mise en production
 
-J'ai exporté le modèle en **ONNX**, avec un axe batch dynamique pour pouvoir traiter les
-24 images d'un tick d'un coup, et j'ai vérifié que les sorties ONNX collent à celles de
-PyTorch. Côté latence, sur mon Mac en CPU je suis déjà autour de 48 ms pour un tick
-complet ; sur la GTX 1060 en CUDA/FP16 ce sera nettement plus rapide, donc le temps réel
-sur 12 flux est confortable. Le modèle est minuscule (les deux branches partagent le
-même backbone), il tient largement dans les 3 Go.
+J'ai exporté le modèle en **ONNX**, avec un axe batch dynamique pour pouvoir traiter
+plusieurs images d'un coup, et j'ai vérifié que les sorties ONNX collent à celles de
+PyTorch.
+
+Côté coût, c'est vraiment léger. Le modèle fait **3,7 millions de paramètres**, soit
+**~15 Mo sur disque** en FP32 (à peu près 8 Mo si je passe en FP16). À l'usage, une fois
+chargé il occupe **~75 Mo de RAM**, et quand il traite un cycle — les 12 caméras, donc 6
+paires de photos — il monte à **~220 Mo**. Sur la GTX 1060 qui a 3 Go, ça laisse un
+facteur 10 de marge, c'est le point le plus tranquille de toute la contrainte matérielle.
+Côté vitesse, sur mon Mac en CPU je suis déjà autour de **48 ms** pour un cycle (environ
+240 images par seconde) ; sur la 1060 en CUDA/FP16 ce sera nettement plus rapide, donc le
+temps réel sur les 12 flux à la cadence de la ligne (100 kg/h) est largement tenu. Petit
+point d'attention : l'export ONNX crée **deux fichiers** (le graphe et les poids à côté),
+il faut livrer les deux ensemble.
+
+Pour l'utiliser concrètement, j'ai fait un petit script qui prend les deux photos d'une
+châtaigne et sort sa classe :
+
+```bash
+python src/training/predict.py --t vue_dessus.jpg --b vue_dessous.jpg
+```
+
+Il applique le même prétraitement qu'à l'entraînement, moyenne la prédiction sur quelques
+rotations, et n'annonce « Conforme » que si le modèle est assez sûr (au-dessus du seuil).
+Un exemple qui résume bien le projet : sur une image dont le nom de fichier dit
+« Conforme » mais dont le créneau est en fait vide, le script répond « Vide » à 95 % — il
+a bien compris que le nom de fichier n'est pas la vérité, et que c'est la vue réelle qui
+compte.
 
 ## Ce que je retiens
 
