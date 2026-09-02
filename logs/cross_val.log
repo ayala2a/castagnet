@@ -1,0 +1,14 @@
+=== CROSS-VAL mar.  1 sept. 2026 19:36:22 CEST ===
+fold 1: seuil=0.68  Conforme P=0.961 R=0.835  acc=0.874
+fold 2: seuil=0.57  Conforme P=0.958 R=0.880  acc=0.886
+fold 3: seuil=0.64  Conforme P=0.945 R=0.876  acc=0.901
+fold 4: seuil=0.41  Conforme P=0.930 R=0.881  acc=0.877
+fold 5: seuil=0.46  Conforme P=0.952 R=0.866  acc=0.896
+
+=== Validation croisée (moyenne ± écart-type sur 5 folds) ===
+  Conforme précision   0.949 ± 0.012
+  Conforme rappel      0.868 ± 0.019
+  accuracy             0.887 ± 0.012
+
+-> détail dans reports/cross_validation.csv
+=== DONE mar.  1 sept. 2026 22:46:42 CEST ===

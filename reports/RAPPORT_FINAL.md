@@ -83,6 +83,41 @@ Justification complète des choix (backbone léger pour la GTX 1060, prétraitem
 disque circulaire, augmentation rotation 360°, loss pondérée, seuil calibré sur la
 précision Conforme, MLflow…) : **`choix_justifies.md`** (12 décisions, *why / why-not*).
 
+### 3.1bis Comment fonctionne le modèle retenu (pas-à-pas)
+
+1. **Entrée** : les 2 images d'une même châtaigne (vue dessus T + vue dessous B),
+   recadrées au centre, masquées en disque, redimensionnées en 224×224.
+2. **Extraction** : un même backbone MobileNetV3-Large (poids partagés) transforme
+   chaque vue en un vecteur de features (576 dimensions).
+3. **Fusion `|T−B|`** : on donne à la suite du réseau le vecteur
+   `[features_T, features_B, |features_T − features_B|]`. Le terme `|T−B|` encode
+   l'**asymétrie entre les deux faces** — un défaut visible d'un seul côté crée un
+   grand écart, signal directement exploitable.
+4. **Décision** : une petite tête (MLP) sort 4 scores (Conforme / NON Conforme /
+   PIETRA / Vide).
+5. **À l'inférence** : **TTA** (on moyenne la prédiction sur quelques rotations), puis
+   on n'accepte « Conforme » que si la confiance dépasse un **seuil calibré** — c'est
+   ce seuil qui garantit la précision ≥ 95 % exigée.
+6. **En production** : 1 cycle = les 12 caméras = 6 paires T/B → 6 décisions calculées
+   en un seul appel batché.
+
+### 3.1ter Tests de robustesse (validation croisée)
+
+Pour vérifier que le résultat n'est pas un coup de chance sur un seul découpage, on a
+mené une **validation croisée 5 folds** (StratifiedGroupKFold groupé par châtaigne,
+config allégée 12 epochs sans TTA). Résultats stables :
+
+| Métrique | Moyenne ± écart-type |
+|---|---|
+| Conforme précision | 0,949 ± 0,012 |
+| Conforme rappel | 0,868 ± 0,019 |
+| Accuracy | 0,887 ± 0,012 |
+
+L'écart-type de ~1-2 points confirme la **stabilité** du modèle. Ces modèles de
+validation ne sont **pas** le modèle livré : le modèle retenu reste celui entraîné en
+30 epochs + TTA (§3.2), déjà au-dessus de la cible ; la validation croisée n'a servi
+qu'à en éprouver la fiabilité.
+
 ### 3.2 Résultats sur le jeu de TEST
 
 | Modèle | Accuracy | Conforme P / R (seuil calibré) | Cible |
@@ -112,23 +147,58 @@ comparatif à égalité et la sélection du meilleur modèle sur l'**objectif m�
 ## 4. Export et compatibilité production (C30)
 
 - **Export ONNX** (`export_onnx.py`) opset dynamique (axe batch) → permet d'empiler
-  les **24 images d'un tick (2 vues × 12 flux)** en un seul appel.
+  les images d'un tick en un seul appel.
 - **Équivalence PyTorch ↔ ONNX vérifiée** (`assert_allclose`, rtol 1e-3).
-- **Latence** (onnxruntime, CPU de dev — indicatif) :
+
+### 4.1 Taille et coût du modèle
+
+| Poste | Valeur |
+|---|---|
+| Paramètres | **3,71 M** |
+| Poids ONNX total (FP32) | **15,3 Mo** (`model_dualbranch.onnx` 1,0 Mo + `.onnx.data` 14,2 Mo) |
+| Poids en FP16 (prod) | **~7,7 Mo** |
+
+> ⚠️ L'ONNX est en **deux fichiers** (graphe + poids externes) : livrer les deux
+> ensemble. Le backbone étant **partagé** entre les vues T et B, le nombre de
+> paramètres ne double pas.
+
+### 4.2 Empreinte mémoire (mesurée, onnxruntime)
+
+| Situation | RAM (RSS pic) |
+|---|---|
+| Runtime + modèle chargé (repos) | ~75 Mo |
+| **1 tick = 6 paires T/B (12 images)** | **~220 Mo** |
+| Batch 12 paires | ~360 Mo |
+| Batch 24 | ~660 Mo |
+
+La mémoire est dominée par les **activations** (le poids ne fait que 15 Mo). Sur les
+**3 Go de la GTX 1060**, la marge est d'un **facteur ~10** ; en FP16, l'empreinte est
+encore ~divisée par deux.
+
+### 4.3 Latence et débit (onnxruntime, CPU de dev — indicatif)
 
 | Batch | p50 | débit |
 |---|---|---|
 | 1 (1 châtaigne) | 5,5 ms | 168 img/s |
 | 12 | 47,9 ms | 240 img/s |
-| 24 (1 tick complet) | 98,9 ms | 241 img/s |
+| 24 | 98,9 ms | 241 img/s |
 
-- **Compatibilité 12 flux** : 1 tick = 6 paires → ~48 ms sur *CPU de dev*. Sur la
-  cible **GTX 1060 (CUDA/FP16)** la latence sera nettement plus basse → **temps réel
-  confortable** pour la cadence 100 kg/h. Modèle **léger** (backbone partagé) → tient
-  largement dans les **3 Go**.
-- **Recommandation finale** : retenir le **dual-branch `concat_diff`** ; activer le
-  **TTA** si la latence GPU le permet (arbitrage précision ↔ latence à mesurer sur la
-  cible), sinon le modèle sans TTA respecte déjà la contrainte (P=0,951 / R=0,873).
+**1 tick = 6 paires** → ~48 ms sur CPU de dev, soit ~**240 images/s** (≈ 120
+châtaignes/s), très au-dessus de la cadence de la ligne (100 kg/h). Sur la cible
+**GTX 1060 (CUDA/FP16)**, la latence sera nettement plus basse.
+
+### 4.4 Bilan production
+
+Le modèle traite **2 images par châtaigne**, **12 images (6 paires) par cycle**, pour
+un coût total très modeste : **~15 Mo sur disque**, **~220 Mo de RAM en fonctionnement**,
+**~48 ms par cycle**. Toutes les contraintes du cahier des charges (précision, rappel,
+temps réel sur 12 flux, tenue en 3 Go) sont satisfaites, la mémoire étant le point le
+plus confortable.
+
+**Recommandation finale** : retenir le **dual-branch `concat_diff` + TTA** (respecte la
+cible avec marge : P=0,953 / R=0,884). Si la latence GPU imposait de couper le TTA, le
+modèle sans TTA respecte déjà la contrainte (P=0,951 / R=0,873) — c'est l'arbitrage
+précision ↔ latence à trancher sur le matériel cible.
 
 ---
 

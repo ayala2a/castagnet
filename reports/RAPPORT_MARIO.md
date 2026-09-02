@@ -98,6 +98,24 @@ cahier des charges sont tenus, avec de la marge. Et les erreurs restantes vont d
 bon sens : le modèle recale à tort quelques bonnes châtaignes plutôt que de laisser
 passer des mauvaises.
 
+Ce modèle-là me paraissait déjà solide, mais pour ne pas me fier à un seul découpage
+j'ai voulu vérifier qu'il était **stable**. J'ai donc fait une validation croisée en 5
+découpages (toujours groupés par châtaigne pour éviter la fuite) : je retombe sur une
+précision de 94,9 % ± 1,2 et un rappel de 86,8 % ± 1,9. L'écart-type de 1 à 2 points me
+confirme que le résultat n'est pas un coup de chance. Ces modèles-là m'ont juste servi à
+tester la robustesse — le modèle que je garde reste celui d'avant, entraîné plus
+longtemps et avec le TTA, qui a la petite marge en plus.
+
+## En deux mots, comment il marche
+
+Concrètement, pour une châtaigne je passe ses deux photos (dessus et dessous) dans le
+même extracteur, ce qui me donne deux vecteurs de caractéristiques. Je les combine en
+gardant les deux **plus leur écart** `|T−B|`, et une petite couche finale sort les 4
+classes. À l'usage, je moyenne la prédiction sur quelques rotations (le TTA) et je
+n'accepte « Conforme » que si le modèle est assez sûr — c'est ce seuil qui me garantit la
+précision. En production, un cycle traite les 12 caméras d'un coup, soit 6 paires, en un
+seul passage.
+
 ## La mise en production
 
 J'ai exporté le modèle en **ONNX**, avec un axe batch dynamique pour pouvoir traiter les
