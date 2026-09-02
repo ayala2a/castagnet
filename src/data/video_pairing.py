@@ -66,34 +66,55 @@ def detect_events(sig, thr_ratio=0.5, min_gap=10):
     return [int((a + b) / 2) for a, b in merged if b - a >= 1]
 
 
-def crop_circle(img):
-    """Détecte le créneau circulaire et renvoie un crop carré masqué (ou None)."""
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+def detect_circle(gray):
     circles = cv2.HoughCircles(cv2.medianBlur(gray, 5), cv2.HOUGH_GRADIENT,
                                dp=1.2, minDist=300, param1=100, param2=40,
                                minRadius=80, maxRadius=220)
     if circles is None:
-        h, w = img.shape[:2]
-        x, y, r = w // 2, h // 2, min(h, w) // 3
-    else:
-        x, y, r = np.round(circles[0][0]).astype(int)
+        h, w = gray.shape[:2]
+        return w // 2, h // 2, min(h, w) // 3
+    return tuple(np.round(circles[0][0]).astype(int))
+
+
+def presence(img, x, y, r):
+    """Fraction de pixels 'châtaigne' (beige/brun) dans le disque intérieur."""
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = np.zeros(img.shape[:2], np.uint8)
+    cv2.circle(mask, (x, y), int(r * 0.85), 255, -1)
+    tan = ((hsv[:, :, 0] >= 8) & (hsv[:, :, 0] <= 32) &
+           (hsv[:, :, 1] > 30) & (hsv[:, :, 2] > 60) & (mask == 255))
+    inside = (mask == 255).sum()
+    return tan.sum() / inside if inside else 0.0
+
+
+def crop_from(img, x, y, r):
     R = int(r * 1.15)
     h, w = img.shape[:2]
     crop = img[max(0, y - R):min(h, y + R), max(0, x - R):min(w, x + R)].copy()
     ch, cw = crop.shape[:2]
     if ch < 10 or cw < 10:
         return None
-    mask = np.zeros((ch, cw), np.uint8)
-    cv2.circle(mask, (cw // 2, ch // 2), min(ch, cw) // 2, 255, -1)
-    return cv2.bitwise_and(crop, crop, mask=mask)
+    m = np.zeros((ch, cw), np.uint8)
+    cv2.circle(m, (cw // 2, ch // 2), min(ch, cw) // 2, 255, -1)
+    return cv2.bitwise_and(crop, crop, mask=m)
 
 
-def grab(path, frame):
+def best_in_window(path, center, w=3):
+    """Dans [center-w, center+w], renvoie (frame, crop, score) où le fruit est le
+    plus présent dans le créneau — évite les vues vides."""
     cap = cv2.VideoCapture(path)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
-    ok, img = cap.read()
+    best = (center, None, -1.0)
+    for f in range(max(0, center - w), center + w + 1):
+        cap.set(cv2.CAP_PROP_POS_FRAMES, f)
+        ok, img = cap.read()
+        if not ok:
+            continue
+        x, y, r = detect_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+        s = presence(img, x, y, r)
+        if s > best[2]:
+            best = (f, crop_from(img, x, y, r), s)
     cap.release()
-    return img if ok else None
+    return best
 
 
 def main(a):
@@ -103,16 +124,17 @@ def main(a):
     print(f"{len(events)} châtaignes détectées dans la vidéo A")
 
     rows, thumbs = [], []
-    for i, fa in enumerate(events):
-        fb = fa - a.offset
-        if fb < 0:
+    for i, fa0 in enumerate(events):
+        fb0 = fa0 - a.offset
+        if fb0 < 0:
             continue
-        imgA = grab(os.path.join(VIDEO_DIR, VIDEO_A), fa)
-        imgB = grab(os.path.join(VIDEO_DIR, VIDEO_B), fb)
-        if imgA is None or imgB is None:
-            continue
-        cropA, cropB = crop_circle(imgA), crop_circle(imgB)
+        # meilleure vue du fruit dans chaque vidéo, dans une fenêtre ±w
+        fa, cropA, sa = best_in_window(os.path.join(VIDEO_DIR, VIDEO_A), fa0, a.window)
+        fb, cropB, sb = best_in_window(os.path.join(VIDEO_DIR, VIDEO_B), fb0, a.window)
         if cropA is None or cropB is None:
+            continue
+        # on ne garde que les paires où le fruit est présent des DEUX côtés
+        if min(sa, sb) < a.min_presence:
             continue
         pid = f"vid_{i:03d}"
         pa, pb = f"{pid}_A.jpg", f"{pid}_B.jpg"
@@ -144,4 +166,7 @@ def main(a):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--offset", type=int, default=OFFSET)
+    ap.add_argument("--window", type=int, default=3, help="fenêtre de recherche ±frames")
+    ap.add_argument("--min-presence", type=float, default=0.04, dest="min_presence",
+                    help="présence minimale du fruit dans les 2 vues pour garder la paire")
     main(ap.parse_args())
