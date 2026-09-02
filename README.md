@@ -1,5 +1,9 @@
 # CastagNet — tri automatique de châtaignes par vision (MESPR BIHAR)
 
+> **Projet étudiant** — Mise en Situation Professionnelle (MESPR), MSc BIHAR / ESTIA.
+> Réalisé par *ayala2a*. Classifieur de châtaignes sèches pour une ligne de tri
+> industrielle, du travail sur la donnée jusqu'au modèle exportable en production.
+
 Classification d'images de châtaignes sèches en **4 classes** — Conforme / NON
 Conforme / PIETRA / Vide — à partir de **2 vues caméra** (dessus **T** + dessous
 **B**) par fruit, pour une ligne de tri à 12 caméras.
@@ -7,6 +11,18 @@ Conforme / PIETRA / Vide — à partir de **2 vues caméra** (dessus **T** + des
 Ce dépôt regroupe le travail des trois volets du sujet : qualité de la donnée
 (§4.1), modélisation & comparaison d'architectures (§4.2), export ONNX & latence
 production (§4.3).
+
+## Livrables (pour l'évaluation)
+
+- **Rapports** : `reports/RAPPORT_FINAL.md` (structuré) et `reports/RAPPORT_MARIO.md`
+  (démarche), + `quality_report.md`, `choix_justifies.md`, `references_ml.md`.
+- **Modèle ONNX** : `model_dualbranch.onnx` + `model_dualbranch.onnx.data` (racine du
+  dépôt), aussi téléchargeable dans la **[Release v1.0](../../releases/tag/v1.0)**.
+- **Données & labels** : `data/labels_principal.csv` (mis à jour), `data/pairs_TB.csv`
+  et `data/video_pairs.csv` (correspondances T/B dataset + vidéo).
+- **Traces MLflow** : `src/training/mlflow.db` (`mlflow ui`) + figures dans `reports/figures/`.
+- **Code** : `src/data/` (audit, appariement, vidéo) + `src/training/` (splits, modèles,
+  entraînement, évaluation, export, inférence).
 
 ## Principe clé : une châtaigne = une paire (T, B)
 
@@ -38,22 +54,17 @@ castagnet/
 └── notebooks/
 ```
 
-## Données sources & confidentialité
+## Données
 
-Le dataset (images + labels) appartient au projet CastagnIA / GRPTMC. Pour préserver
-la confidentialité des données du client, **les CSV de labels ne sont pas publiés**
-ici (`data/*.csv` est ignoré). Ils sont **entièrement régénérables** à partir du
-dataset via les scripts fournis :
+Le dataset (images) appartient au projet CastagnIA / GRPTMC ; **les images** ne sont
+pas dans ce dépôt (suivies par DVC dans le dépôt data d'origine). Les **CSV de labels
+et de correspondances** sont fournis dans `data/` et sont aussi **régénérables** via :
 
 ```bash
 python src/data/build_pairs.py      # -> data/pairs_TB.csv, data/labels_chestnut.csv
 python src/training/make_splits.py  # -> data/splits_*.csv
 python src/data/video_pairing.py    # -> data/video_pairs.csv (correspondance T/B vidéo)
 ```
-
-**Livrables contenant des données client** (à transmettre aux examinateurs en privé,
-non publiés ici) : `labels_principal.csv` mis à jour, `data/video_pairs.csv` et les
-crops vidéo. Tout le reste (code, rapports, modèle, traces MLflow) est public.
 
 ## Modèle entraîné
 

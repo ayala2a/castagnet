@@ -50,9 +50,23 @@ def _augment(bgr):
     return cv2.convertScaleAbs(bgr, alpha=alpha, beta=beta)
 
 
-def _to_tensor(bgr, train):
+def _polar(bgr):
+    """Déroule le disque central en coordonnées polaires (rayon × angle).
+
+    Exploite la cohérence radiale de l'image (info centrée sur le cercle) ; une
+    rotation de la châtaigne devient un décalage vertical -> représentation
+    naturellement adaptée aux petites CNN 'radiales' (cf. §4.2 pour aller plus loin).
+    """
+    h, w = bgr.shape[:2]
+    center = (w / 2, h / 2)
+    return cv2.warpPolar(bgr, (w, h), center, w / 2, cv2.WARP_POLAR_LINEAR)
+
+
+def _to_tensor(bgr, train, polar=False):
     if train:
         bgr = _augment(bgr)
+    if polar:
+        bgr = _polar(bgr)
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     rgb = (rgb - MEAN) / STD
     return torch.from_numpy(rgb.transpose(2, 0, 1)).float()
@@ -69,17 +83,18 @@ def _load(filename, size=224):
 class ImageDataset(Dataset):
     """Baseline mono-vue : renvoie (image, label)."""
 
-    def __init__(self, df, train=False, img_size=224):
+    def __init__(self, df, train=False, img_size=224, polar=False):
         self.df = df.reset_index(drop=True)
         self.train = train
         self.img_size = img_size
+        self.polar = polar
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, i):
         r = self.df.iloc[i]
-        x = _to_tensor(_load(r["filename"], self.img_size), self.train)
+        x = _to_tensor(_load(r["filename"], self.img_size), self.train, self.polar)
         return x, CLASS_TO_IDX[r["label"]]
 
 
@@ -90,17 +105,18 @@ class PairDataset(Dataset):
     hors-cercle un fond noir, donc une vue absente = 'rien vu de ce côté').
     """
 
-    def __init__(self, df, train=False, img_size=224):
+    def __init__(self, df, train=False, img_size=224, polar=False):
         self.df = df.reset_index(drop=True)
         self.train = train
         self.img_size = img_size
+        self.polar = polar
 
     def __len__(self):
         return len(self.df)
 
     def _view(self, filename):
         if isinstance(filename, str) and filename:
-            return _to_tensor(_load(filename, self.img_size), self.train)
+            return _to_tensor(_load(filename, self.img_size), self.train, self.polar)
         return torch.zeros(3, self.img_size, self.img_size)
 
     def __getitem__(self, i):

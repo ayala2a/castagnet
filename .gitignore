@@ -7,9 +7,3 @@ mlruns/
 *.onnx
 *.pt
 .DS_Store
-
-# Données du client (régénérables via src/data/build_pairs.py + make_splits.py) — non publiées
-data/*.csv
-# Artefacts locaux
-*.db
-mlflow.db
