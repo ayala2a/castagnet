@@ -25,13 +25,13 @@ CLASSES = ["Conforme", "NON Conforme", "PIETRA", "Vide"]
 CONF_IDX = 0
 MEAN = np.array([0.485, 0.456, 0.406], np.float32)
 STD = np.array([0.229, 0.224, 0.225], np.float32)
-# seuil calibré : on n'accepte "Conforme" que si sa proba dépasse ce seuil
-# (garantit la précision >= 95 % exigée par le cahier des charges)
-SEUIL_CONFORME = 0.64
+# modèle de production = radial (déroulé polaire) ; seuil calibré associé
+POLAR = True
+SEUIL_CONFORME = 0.57
 
 
-def preprocess(path, size=224, r_ratio=0.49):
-    """Même prétraitement qu'à l'entraînement : center-crop + masque circulaire."""
+def _circular(path, size=224, r_ratio=0.49):
+    """Center-crop + masque circulaire (BGR, non normalisé)."""
     img = cv2.imread(path)
     if img is None:
         img = np.zeros((size, size, 3), np.uint8)
@@ -41,10 +41,17 @@ def preprocess(path, size=224, r_ratio=0.49):
     img = cv2.resize(img, (size, size))
     mask = np.zeros((size, size), np.uint8)
     cv2.circle(mask, (size // 2, size // 2), int(size * r_ratio), 255, -1)
-    img = cv2.bitwise_and(img, img, mask=mask)
-    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+    return cv2.bitwise_and(img, img, mask=mask)
+
+
+def _to_input(bgr, polar=POLAR):
+    """Applique le déroulé polaire (si modèle radial) + normalisation -> (1,3,H,W)."""
+    if polar:
+        h, w = bgr.shape[:2]
+        bgr = cv2.warpPolar(bgr, (w, h), (w / 2, h / 2), w / 2, cv2.WARP_POLAR_LINEAR)
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     rgb = (rgb - MEAN) / STD
-    return rgb.transpose(2, 0, 1)[None]  # (1,3,H,W)
+    return rgb.transpose(2, 0, 1)[None]
 
 
 def softmax(x):
@@ -54,17 +61,17 @@ def softmax(x):
 
 def predict(t_path, b_path, tta=4):
     sess = ort.InferenceSession(ONNX, providers=["CPUExecutionProvider"])
-    xt, xb = preprocess(t_path), preprocess(b_path)
-    # TTA simple : on moyenne la vue nette + quelques rotations
+    cart_t, cart_b = _circular(t_path), _circular(b_path)   # crops cartésiens
     probs = np.zeros(len(CLASSES), np.float32)
     for k in range(max(1, tta)):
+        # TTA : rotation en cartésien PUIS déroulé polaire (comme à l'entraînement)
         if k == 0:
-            it, ib = xt, xb
+            rt, rb = cart_t, cart_b
         else:
-            ang = 90 * k
-            M = cv2.getRotationMatrix2D((112, 112), ang, 1.0)
-            it = np.stack([cv2.warpAffine(xt[0, c], M, (224, 224)) for c in range(3)])[None]
-            ib = np.stack([cv2.warpAffine(xb[0, c], M, (224, 224)) for c in range(3)])[None]
+            M = cv2.getRotationMatrix2D((112, 112), 90 * k, 1.0)
+            rt = cv2.warpAffine(cart_t, M, (224, 224))
+            rb = cv2.warpAffine(cart_b, M, (224, 224))
+        it, ib = _to_input(rt), _to_input(rb)
         logits = sess.run(None, {"view_t": it, "view_b": ib})[0][0]
         probs += softmax(logits)
     probs /= max(1, tta)
