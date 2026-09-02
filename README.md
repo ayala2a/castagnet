@@ -48,7 +48,12 @@ dataset via les scripts fournis :
 ```bash
 python src/data/build_pairs.py      # -> data/pairs_TB.csv, data/labels_chestnut.csv
 python src/training/make_splits.py  # -> data/splits_*.csv
+python src/data/video_pairing.py    # -> data/video_pairs.csv (correspondance T/B vidéo)
 ```
+
+**Livrables contenant des données client** (à transmettre aux examinateurs en privé,
+non publiés ici) : `labels_principal.csv` mis à jour, `data/video_pairs.csv` et les
+crops vidéo. Tout le reste (code, rapports, modèle, traces MLflow) est public.
 
 ## Modèle entraîné
 

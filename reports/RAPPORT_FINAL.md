@@ -78,6 +78,22 @@ repère vert, deux angles). Table de correspondance dans `data/video_pairs.csv`.
 la même logique T/B que pour le dataset (§2.1), mais reconstruite par **alignement
 temporel** au lieu de la clé de nom de fichier.
 
+**Pourquoi cette méthode.** Aligner « à l'œil » deux vidéos de 750 frames est peu fiable
+et non reproductible. On a donc choisi une mesure objective : puisque les deux caméras
+voient **le même flux de fruits dans le même ordre**, l'information robuste et commune
+aux deux vidéos est la **suite des instants d'arrivée** des châtaignes. Corréler ces
+deux suites (plutôt qu'un signal d'image global, trop sensible au cadrage différent des
+deux caméras) donne un décalage **net et unique** (5 frames), là où la corrélation de
+signaux globaux donnait des estimations incohérentes. Le filtrage « meilleure frame dans
+±3 » puis « présence du fruit des deux côtés » élimine les vues où le fruit entre/sort du
+champ — on ne garde que des paires réellement exploitables.
+
+**Choix : le sous-ensemble vidéo n'est pas injecté dans l'entraînement.** Ces crops ne
+sont pas labellisés (hors périmètre demandé) ; les ajouter non labellisés dégraderait le
+signal. Ils constituent un **livrable d'extraction/appariement** à part (démonstration de
+la méthode), pas une extension du jeu d'entraînement, qui reste le dataset relu de 35 254
+images.
+
 ### 2.3 Découpage train / val / test (anti-fuite)
 `make_splits.py` : **70/15/15**, **stratifié** (classe × année), **groupé par
 châtaigne** → les 2 vues d'un fruit tombent dans le même sous-ensemble.
@@ -157,10 +173,17 @@ qu'à en éprouver la fiabilité.
   d'epochs, ni 256 px, ni nettoyage n'ont aidé ; **seule la fusion `|T−B|` (archi
   ciblée) + le TTA** ont débloqué le rappel.
 
-### 3.4 Suivi MLflow
-Tous les runs (hyperparamètres, métriques *par classe*, `conforme_recall_at_p95`,
-matrices de confusion) sont tracés dans MLflow (`mlflow ui`), permettant le
-comparatif à égalité et la sélection du meilleur modèle sur l'**objectif métier**.
+### 3.4 Suivi MLflow et historique d'entraînement
+Les **11 runs** (hyperparamètres, métriques *par classe*, `conforme_recall_at_p95`,
+matrices de confusion) sont tracés dans MLflow (base `mlflow.db`, consultable via
+`mlflow ui`), ce qui permet le comparatif à égalité et la sélection du meilleur modèle
+sur l'**objectif métier**. Comparatif : `mlflow_comparatif.png`.
+
+**Analyse de l'historique** (`mlflow_history.png`) : la courbe montre une phase
+d'oscillation sur les ~10 premières epochs, puis une **stabilisation** (cosine LR) —
+val_acc autour de 0,90, précision Conforme au-dessus de 0,95, rappel @P95 autour de
+0,85. C'est cette stabilisation tardive qui justifie l'entraînement long et la
+sélection du meilleur epoch sur le rappel @P95 plutôt que sur l'accuracy brute.
 
 ## 4. Export et compatibilité production (C30)
 
