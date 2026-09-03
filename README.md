@@ -1,8 +1,9 @@
 # CastagNet — tri automatique de châtaignes par vision (MESPR BIHAR)
 
 > **Projet étudiant** — Mise en Situation Professionnelle (MESPR), MSc BIHAR / ESTIA.
-> Réalisé par *ayala2a*. Classifieur de châtaignes sèches pour une ligne de tri
-> industrielle, du travail sur la donnée jusqu'au modèle exportable en production.
+> Réalisé par **Mario Caballero** (compte GitHub *ayala2a*). Classifieur de châtaignes
+> sèches pour une ligne de tri industrielle, du travail sur la donnée jusqu'au modèle
+> exportable en production.
 
 Classification d'images de châtaignes sèches en **4 classes** — Conforme / NON
 Conforme / PIETRA / Vide — à partir de **2 vues caméra** (dessus **T** + dessous

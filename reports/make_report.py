@@ -27,255 +27,240 @@ h2 { font-size: 16pt; color: #14607a; border-bottom: 2px solid #14607a;
      padding-bottom: 4px; margin-top: 26px; page-break-after: avoid; }
 h3 { font-size: 12.5pt; color: #1f7a94; margin-top: 18px; page-break-after: avoid; }
 p { margin: 7px 0; text-align: justify; }
-.lead { font-size: 12pt; color: #444; }
+.sub { font-size: 14pt; color: #1f7a94; margin-top: 6px; }
 .meta { color: #666; font-size: 10pt; margin-bottom: 4px; }
 table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10pt; }
 th, td { border: 1px solid #cbd5db; padding: 5px 8px; text-align: left; }
 th { background: #eaf3f6; }
 code { background: #f2f4f5; padding: 1px 4px; border-radius: 3px; font-size: 9.5pt; }
-pre { background: #f7f8f9; border: 1px solid #e2e6e8; border-radius: 5px;
-      padding: 8px 10px; font-size: 9pt; overflow-x: auto; }
 .box { background: #f4f9fb; border-left: 4px solid #14607a; padding: 8px 14px;
        margin: 12px 0; border-radius: 0 4px 4px 0; }
+.def { background: #fbfaf3; border-left: 4px solid #c9a227; padding: 6px 14px;
+       margin: 10px 0; border-radius: 0 4px 4px 0; font-size: 10pt; }
 .ok { color: #17803d; font-weight: 600; }
 figure { margin: 10px 0; page-break-inside: avoid; }
 figcaption { font-size: 9pt; color: #666; font-style: italic; text-align: center; }
 .cover { text-align: center; padding: 60px 0 30px; }
-.cover .sub { font-size: 14pt; color: #1f7a94; margin-top: 6px; }
 .pill { display:inline-block; background:#14607a; color:#fff; border-radius:12px;
         padding:2px 12px; font-size:9pt; margin:2px; }
 ul { margin: 6px 0; }
+</style>
 """
 
 
 BODY = f"""
 <div class="cover">
   <h1>CastagNet</h1>
-  <div class="sub">Classification de châtaignes sèches par vision — rapport de projet</div>
+  <div class="sub">Un logiciel qui reconnaît automatiquement la qualité des châtaignes à partir de photos</div>
   <p class="meta" style="margin-top:24px">Mise en Situation Professionnelle (MESPR) — MSc BIHAR / ESTIA</p>
-  <p class="meta">Auteur : ayala2a · Dépôt : github.com/ayala2a/castagnet</p>
+  <p class="meta">Auteur : <b>Mario Caballero</b> · Dépôt du code : github.com/ayala2a/castagnet</p>
   <div style="margin-top:18px">
-    <span class="pill">C28 · problématique data</span>
-    <span class="pill">C29 · modèles</span>
-    <span class="pill">C30 · production</span>
-    <span class="pill">C31 · organisation données</span>
-    <span class="pill">C32 · programme IA</span>
+    <span class="pill">Données</span>
+    <span class="pill">Modèle</span>
+    <span class="pill">Mise en production</span>
   </div>
 </div>
 
 <div class="box">
-<b>Note de méthode.</b> Pour ce projet, je me suis appuyé sur une IA générative (Claude)
-comme copilote : pour auditer le dataset, retrouver les bonnes références techniques,
-écrire le code et débugger. Les décisions, le raisonnement et les choix de direction
-présentés ici sont les miens ; l'IA a surtout accéléré la recherche et la mise en œuvre.
+<b>Comment j'ai travaillé.</b> Je me suis aidé d'une intelligence artificielle (Claude) comme
+assistant : pour analyser les données, retrouver les bonnes méthodes, écrire le code et corriger
+les erreurs. Les choix, le raisonnement et la direction du projet restent les miens ; l'assistant
+m'a surtout fait gagner du temps.
 </div>
 
-<h2>1. Contexte et problématique</h2>
-<p>La coopérative GRPTMC exploite une ligne de tri automatique de châtaignes sèches
-destinées, notamment, à la Farine de Châtaigne Corse — une filière sous signe de qualité
-où la rigueur du tri conditionne la conformité du produit fini. La machine analyse le flux
-en continu via <b>12 caméras</b> (6 postes, une vue du dessus et une du dessous par poste)
-et doit classer chaque fruit en quatre catégories : <b>Conforme, NON Conforme, PIETRA,
-Vide</b>. On m'a confié le projet en l'état, avec pour mission de le faire progresser sur
-trois fronts : la qualité de la donnée, la robustesse du modèle, et la compatibilité avec
-les contraintes de production.</p>
+<h2>1. Le problème à résoudre</h2>
+<p>Une coopérative corse (le GRPTMC) trie ses châtaignes sèches sur une machine automatique. La
+machine prend chaque fruit en photo pendant qu'il défile, puis doit décider s'il est <b>bon
+(Conforme)</b>, <b>mauvais (NON Conforme)</b>, d'une variété particulière à écarter
+(<b>PIETRA</b>), ou si l'emplacement est simplement <b>vide</b>. On m'a confié le projet pour
+l'améliorer sur trois points : la qualité des données, la fiabilité du logiciel de reconnaissance,
+et sa capacité à tourner sur la vraie machine.</p>
 
-<p>Le cahier des charges fixe des exigences <b>asymétriques</b>, et c'est le fil directeur
-de tout mon travail : laisser passer un mauvais fruit dans le lot Conforme dégrade la
-farine et menace la certification, alors qu'écarter à tort un bon fruit ne coûte qu'un peu
-de rendement. La coopérative demande donc, sur la classe Conforme, une <b>précision ≥ 95 %
-</b> (peu de mauvais fruits acceptés) et un <b>rappel ≥ 85 %</b>, le tout en <b>temps réel
-sur les 12 flux</b> et sur un matériel modeste (une ancienne carte GeForce GTX 1060 de
-3 Go). Chaque décision technique de ce rapport découle de ces contraintes.</p>
+<p>La règle imposée par la coopérative est simple à comprendre et guide tout mon travail :
+<b>il vaut mieux jeter un bon fruit par erreur que d'en laisser passer un mauvais</b>. Laisser
+passer un mauvais fruit gâche la farine et fait perdre le label qualité ; jeter un bon fruit fait
+juste perdre un peu de marchandise. Concrètement, la coopérative demande que, parmi les fruits que
+le logiciel déclare « bons », <b>au moins 95 % le soient vraiment</b> (peu d'erreurs), et que le
+logiciel <b>retrouve au moins 85 % des bons fruits</b>. Le tout doit tourner en direct sur les
+12 caméras de la machine, avec un ordinateur assez ancien.</p>
 
-<h2>2. Le fil directeur</h2>
-<p>Deux idées structurent tout le projet. La première vient du terrain : <b>une châtaigne
-n'est pas une image, c'est une paire d'images</b> (une vue du dessus, une du dessous). La
-seconde vient du cahier des charges : <b>on préfère toujours écarter un bon fruit que
-laisser passer un mauvais</b>. À partir de là, j'ai déroulé le projet dans l'ordre logique
-— d'abord comprendre et fiabiliser la donnée, ensuite construire un modèle qui décide sur
-la paire et respecte l'asymétrie précision/rappel, enfin vérifier qu'il tient en
-production.</p>
+<div class="def"><b>Deux mots à retenir.</b> On parlera souvent de deux mesures :
+la <b>précision</b> = « quand le logiciel dit bon, a-t-il raison ? » ; et le <b>rappel</b> =
+« retrouve-t-il bien tous les bons fruits ? ». La coopérative veut une précision très haute
+(≥ 95 %) et un bon rappel (≥ 85 %).</div>
 
-<h2>3. Travail sur la donnée (§4.1)</h2>
+<h2>2. Ma ligne de conduite</h2>
+<p>Deux idées simples ont guidé tout le projet. La première : <b>une châtaigne, ce n'est pas une
+photo mais deux</b> — la machine la photographie du dessus ET du dessous. La seconde : <b>dans le
+doute, on écarte</b>. À partir de là, j'ai avancé dans l'ordre logique : d'abord bien comprendre et
+nettoyer les données, ensuite construire un logiciel qui décide à partir des deux photos, enfin
+vérifier qu'il tourne sur la vraie machine.</p>
 
-<h3>3.1 Récupération et audit</h3>
-<p>Les images (35 254 au total) sont versionnées par DVC et stockées sur un drive partagé
-— j'ai donc commencé par les rapatrier. En creusant les labels, j'ai découvert un problème
-important : le rapport statistique fourni ne connaissait que trois classes et ignorait
-complètement la classe <b>« Vide »</b>. En croisant le label déduit du nom de fichier avec
-la vraie cible relue, j'ai constaté que <b>35,6 % des images avaient été reclassées en
-Vide</b> lors de la relecture (un créneau photographié peut être vide). Le rapport de
-départ était donc périmé ; je l'ai refait sur les vrais labels.</p>
+<h2>3. Le travail sur les données</h2>
+
+<h3>3.1 Récupérer les données et les vérifier</h3>
+<p>J'ai d'abord récupéré les 35 254 photos fournies. En regardant de près, j'ai trouvé un problème
+important : le rapport qui accompagnait les données ne parlait que de trois catégories et
+oubliait complètement les emplacements <b>vides</b>. Or, en comparant l'étiquette d'origine
+(devinée à partir du nom du fichier) avec la vraie étiquette vérifiée par des humains, j'ai
+constaté que <b>36 % des photos étaient en réalité des emplacements vides</b>. Le rapport de
+départ était donc faux ; je l'ai refait correctement.</p>
 {img("01_avant_apres.png")}
-<figure><figcaption>Répartition des labels : le rapport fourni (à gauche) ignore la classe
-Vide, qui représente pourtant 36 % des images une fois la relecture prise en compte.</figcaption></figure>
-<p>J'ai aussi terminé la relecture du reliquat 2026 et remarqué au passage que ce lot était
-mal étiqueté à l'acquisition (à peine 5 % de vrais PIETRA dedans) — un bon exemple de
-l'hétérogénéité du diagnostic, que le sujet demandait justement d'analyser.</p>
+<figure><figcaption>À gauche, l'ancien rapport (trois catégories) ; à droite, la réalité : les
+emplacements « vides » représentent plus d'un tiers des photos.</figcaption></figure>
+<p>J'ai aussi terminé la vérification d'un lot de photos qui restait à contrôler, et j'ai remarqué
+que ce lot était très mal étiqueté au départ. Ça montre que les données n'étaient pas fiables telles
+quelles — une chose que le sujet demandait justement d'analyser.</p>
 
-<h3>3.2 Relier les deux vues (dataset)</h3>
-<p>Puisqu'un fruit = deux photos, j'ai relié les vues T et B via une clé simple : le nom de
-fichier privé de la position caméra. Cela reconstitue <b>19 078 châtaignes</b>. J'ai ensuite
-analysé les cas où les deux vues étaient en désaccord, et le résultat est net :
-<b>100 % des désaccords viennent d'une face vue comme « Vide »</b> — jamais un vrai conflit
-entre deux classes.</p>
+<h3>3.2 Relier la photo du dessus et celle du dessous</h3>
+<p>Puisqu'un fruit a deux photos, il faut savoir lesquelles vont ensemble. Je les ai reliées grâce
+à leur nom de fichier. En vérifiant, j'ai découvert un point clé : quand les deux photos d'un même
+fruit ne sont pas d'accord sur la catégorie, <b>c'est toujours parce que l'une des deux ne voit pas
+le fruit</b> (il est hors du champ de cette caméra), jamais parce qu'elles voient deux qualités
+différentes.</p>
 {img("03_desaccords_TB.png")}
-<figure><figcaption>Composition des couples de vues T/B : les seuls écarts sont « une face
-Vide », jamais deux vraies classes différentes.</figcaption></figure>
-<p><b>Pourquoi c'est décisif.</b> Cela prouve que décider sur une seule image est trompeur :
-environ un tiers des fruits présents apparaissent « Vide » sur l'une de leurs deux vues. J'en
-tire une règle d'agrégation simple et sûre — <b>la classe non-Vide gagne</b>, et en cas de
-vrai doute je prends la plus sévère — qui colle à la priorité « pureté du lot » du cahier des
-charges.</p>
+<figure><figcaption>Les seuls désaccords entre les deux photos viennent d'une vue « vide » ;
+jamais d'un vrai conflit de qualité.</figcaption></figure>
+<p><b>Pourquoi c'est important.</b> Ça prouve qu'on ne peut pas se fier à une seule photo :
+environ un fruit sur trois semble « vide » sur l'une de ses deux photos alors qu'il est bien là.
+La bonne règle est donc simple : <b>si une photo voit le fruit, on lui fait confiance</b>, et en cas
+de vrai doute on choisit la catégorie la plus sévère — ce qui respecte la consigne « dans le doute,
+on écarte ».</p>
 
-<h3>3.3 Extraction et appariement des vidéos</h3>
-<p>Deux vidéos de 30 s filment le même créneau, une vue du haut et une du bas, mais avec un
-micro-décalage temporel. Il fallait les apparier. <b>Pourquoi ne pas le faire à l'œil</b> :
-aligner deux flux de 750 images au jugé n'est ni fiable ni reproductible. J'ai donc mesuré
-le décalage. J'ai détecté dans chaque vidéo la <b>séquence d'arrivée des châtaignes</b>, et
-constaté qu'elles avaient exactement la même cadence (une châtaigne toutes les 27 images) —
-donc le même flux. <b>Pourquoi ce signal plutôt qu'un signal d'image global</b> : les deux
-caméras cadrent différemment, et mes premiers essais de corrélation globale donnaient des
-décalages incohérents (de −102 à +86 images) ; la suite des arrivées, elle, est une
-information commune et robuste. En alignant les deux séquences, j'obtiens un décalage
-<b>net et unique de 5 images (0,2 s)</b>, la vue du bas en avance. J'ai vérifié une paire à
-l'écran — même fruit, même repère vert, deux angles — puis sorti une vingtaine de paires
-propres en prenant, pour chaque fruit, l'image où il est le mieux visible dans chaque vidéo.</p>
+<h3>3.3 Extraire et relier les images des vidéos</h3>
+<p>On m'a aussi donné deux vidéos de 30 secondes qui filment le même fruit, une du dessus et une du
+dessous, mais elles ne sont <b>pas parfaitement synchronisées</b> : l'une démarre un tout petit peu
+avant l'autre. Il fallait retrouver ce décalage pour relier les bonnes images entre elles.</p>
+<p><b>Pourquoi ne pas le faire à l'œil</b> : comparer deux vidéos de 750 images au jugé n'est ni
+fiable ni sérieux. Je l'ai donc mesuré. J'ai repéré, dans chaque vidéo, les moments où un fruit
+passe, et j'ai vu qu'ils passaient exactement au même rythme dans les deux — c'est donc bien le même
+flux. En comparant ces moments, j'obtiens un décalage <b>clair et unique de 5 images (0,2 seconde)</b>.
+J'ai vérifié une paire à l'écran (même fruit, même repère vert, vu sous deux angles), puis sorti une
+vingtaine de paires propres.</p>
 {img(os.path.join(ROOT, "data", "video_frames", "pairs_contact.png"))}
-<figure><figcaption>Paires T/B reconstituées depuis les vidéos (haut = vidéo A, bas = vidéo B,
-chaque colonne = une même châtaigne sous deux angles).</figcaption></figure>
+<figure><figcaption>Fruits reliés depuis les vidéos : en haut la première vidéo, en bas la seconde ;
+chaque colonne est le même fruit vu des deux côtés.</figcaption></figure>
 
-<h3>3.4 Dataset final et découpage anti-fuite</h3>
-<p>Pour l'entraînement, l'unité est la <b>châtaigne</b> (sa paire), pas l'image. Le
-découpage train/val/test est <b>stratifié</b> (par classe et par année) et surtout
-<b>groupé par châtaigne</b> : les deux vues d'un même fruit tombent toujours dans le même
-sous-ensemble. <b>Pourquoi</b> : sinon la vue T d'un fruit pourrait être en entraînement et
-sa vue B en test, et le modèle « reconnaîtrait le fruit » (fuite de données) — des scores
-flatteurs en test mais un échec en production. J'ai vérifié : zéro fuite. Le sous-ensemble
-vidéo, non labellisé, n'est pas injecté dans l'entraînement (l'ajouter dégraderait le
-signal) ; il constitue un livrable d'extraction/appariement à part.</p>
+<h3>3.4 Préparer les données pour l'apprentissage</h3>
+<p>Pour entraîner le logiciel, je raisonne par <b>fruit</b> (ses deux photos), pas par photo isolée.
+Je répartis les fruits en trois groupes : un pour apprendre, un pour régler, un pour tester. Point
+important : <b>les deux photos d'un même fruit restent toujours dans le même groupe</b>. Sinon, le
+logiciel pourrait « reconnaître » un fruit déjà vu et tricher sans le vouloir — il aurait de bonnes
+notes au test mais échouerait sur la vraie machine. J'ai vérifié que ce n'arrive jamais.</p>
 
-<h2>4. Modélisation (§4.2)</h2>
+<h2>4. Le logiciel de reconnaissance</h2>
 
-<h3>4.1 Les architectures, et pourquoi</h3>
-<p>J'ai comparé plusieurs modèles, dans une progression logique guidée par les résultats :</p>
+<h3>4.1 Les différentes versions, et pourquoi</h3>
+<p>J'ai construit plusieurs versions, de plus en plus fines, en me basant à chaque fois sur ce que
+les résultats me montraient :</p>
 <ul>
-<li><b>Un CNN « maison »</b> (codé à la main, sur une seule image) comme baseline exigée.
-Il plafonne et rate presque totalement PIETRA — logique, un défaut ne se voit souvent que
-d'un côté.</li>
-<li><b>Un réseau dual-branch</b> : deux extracteurs de caractéristiques à poids partagés
-(siamois) sur les vues T et B, puis une fusion. C'est l'architecture qui correspond au
-problème (deux vues → une décision). <b>Pourquoi un backbone léger (MobileNetV3)</b> :
-la cible est une GTX 1060 de 3 Go qui doit traiter les 12 flux — il faut rester rapide et
-compact. <b>Pourquoi pas de la détection d'objets (YOLO)</b> : la châtaigne est déjà centrée
-dans le créneau, on n'a qu'à la classer, pas à la localiser.</li>
-<li><b>Une fusion enrichie <code>[T, B, |T−B|]</code></b>. En observant que tout plafonnait
-vers 0,86–0,88 sur mon indicateur clé, j'ai raisonné sur ce que « voit » le réseau : si un
-défaut n'apparaît que d'un côté, les caractéristiques des deux vues deviennent différentes à
-cet endroit. Plutôt que de simplement concaténer, j'ai donné explicitement au modèle
-<b>l'écart absolu entre les vues</b>. C'est ce qui a débloqué le rappel.</li>
-<li><b>Une représentation radiale</b> (piste « pour aller plus loin » du sujet) : je déroule
-le disque en coordonnées polaires avant le réseau. La cohérence radiale s'aligne alors sur un
-axe, et une rotation du fruit devient un simple décalage — robustesse à l'orientation par
-construction. C'est finalement mon <b>meilleur modèle</b>.</li>
+<li><b>Une version simple</b> qui ne regarde qu'une seule photo (la version de base demandée). Elle
+rate presque tous les fruits PIETRA — logique, le défaut ne se voit souvent que d'un côté.</li>
+<li><b>Une version qui regarde les deux photos ensemble.</b> C'est celle qui colle au problème :
+deux photos, une décision. J'ai choisi un modèle de reconnaissance d'images <b>léger et rapide</b>
+(appelé MobileNet), parce que la vraie machine a un ordinateur modeste. Je n'ai pas utilisé de
+détection d'objet (type « encadrer le fruit ») : le fruit est déjà bien au centre, il suffit de le
+classer.</li>
+<li><b>Une version qui regarde en plus la différence entre les deux photos.</b> En voyant que les
+résultats plafonnaient, je me suis dit : si un défaut n'est visible que d'un côté, alors les deux
+photos se ressemblent moins à cet endroit. J'ai donc donné au logiciel non seulement les deux photos,
+mais aussi <b>leur différence</b>. C'est ce qui a fait progresser le rappel.</li>
+<li><b>Une version « radiale ».</b> Le sujet suggérait d'exploiter le fait que l'information est dans
+le disque central de l'image. J'ai donc <b>déroulé ce disque à plat</b> (comme si on l'ouvrait en
+partant du centre) avant de le montrer au logiciel. Avantage : peu importe comment le fruit est
+tourné, ça revient au même. C'est finalement ma <b>meilleure version</b>.</li>
 </ul>
 
-<h3>4.2 La métrique de décision, et pourquoi</h3>
-<p>Je ne me fie pas à l'accuracy globale (trompeuse en déséquilibre) ni à l'argmax brut.
-Comme le cahier des charges impose une contrainte asymétrique, je <b>calibre un seuil de
-confiance</b> sur la classe Conforme : on n'accepte « Conforme » que si la probabilité
-dépasse ce seuil. C'est ce mécanisme qui garantit la précision ≥ 95 % tout en maximisant le
-rappel. J'ai d'ailleurs sélectionné le meilleur modèle non pas sur l'accuracy, mais
-directement sur le <b>rappel Conforme à précision 95 %</b> — l'objectif métier réel.</p>
+<div class="def"><b>Une astuce utilisée partout.</b> Pour fiabiliser les décisions, je fais analyser
+au logiciel plusieurs versions <b>pivotées</b> de la même photo, puis je prends la moyenne. Ça évite
+qu'un mauvais angle fausse le résultat.</div>
 
-<h3>4.3 Résultats (jeu de test)</h3>
+<h3>4.2 Comment le logiciel décide (et pourquoi comme ça)</h3>
+<p>Le logiciel ne se contente pas de choisir la catégorie la plus probable : ce serait risqué vu la
+consigne. À la place, il ne déclare un fruit <b>« bon »</b> que s'il en est <b>vraiment sûr</b>
+(au-dessus d'un niveau de confiance réglé exprès). C'est ce réglage qui garantit qu'au moins 95 %
+des fruits déclarés bons le sont réellement, tout en en retrouvant le plus possible. J'ai d'ailleurs
+choisi la meilleure version en visant directement cet objectif, pas une note globale.</p>
+
+<h3>4.3 Les résultats (sur des fruits jamais vus)</h3>
 <table>
-<tr><th>Modèle</th><th>Accuracy</th><th>Conforme précision / rappel</th><th>Cahier des charges</th></tr>
-<tr><td>CNN maison (baseline, 1 vue)</td><td>0,659</td><td>0,954 / 0,296</td><td>non</td></tr>
-<tr><td>Dual-branch (concaténation)</td><td>0,861</td><td>0,955 / 0,774</td><td>non (rappel)</td></tr>
-<tr><td>Dual-branch + fusion |T−B| + TTA</td><td>0,913</td><td>0,953 / 0,884</td><td class="ok">oui</td></tr>
-<tr><td><b>Dual-branch radial + TTA (retenu)</b></td><td><b>0,923</b></td><td><b>0,951 / 0,925</b></td><td class="ok">oui, avec marge</td></tr>
+<tr><th>Version</th><th>Bonnes réponses (global)</th><th>Précision / rappel sur « bon »</th><th>Objectif atteint ?</th></tr>
+<tr><td>Version simple (1 photo)</td><td>66 %</td><td>95 % / 30 %</td><td>non</td></tr>
+<tr><td>Deux photos ensemble</td><td>86 %</td><td>96 % / 77 %</td><td>non (rappel)</td></tr>
+<tr><td>+ la différence entre les photos</td><td>91 %</td><td>95 % / 88 %</td><td class="ok">oui</td></tr>
+<tr><td><b>Version radiale (retenue)</b></td><td><b>92 %</b></td><td><b>95 % / 92 %</b></td><td class="ok">oui, avec de la marge</td></tr>
 </table>
+<p>Le récit est clair : la version à une seule photo échoue (elle ne voit pas les défauts d'un
+côté) ; regarder les deux photos aide beaucoup ; ajouter leur différence fait passer l'objectif ;
+et la version radiale gagne encore. Chaque idée a été validée par les chiffres.</p>
 {img("mlflow_comparatif.png")}
-<figure><figcaption>Comparatif des runs suivis dans MLflow.</figcaption></figure>
-<p>La progression raconte l'histoire : la baseline mono-vue échoue (rappel PIETRA de 0,17,
-car le défaut ne se voit que d'un côté) ; les deux vues font passer PIETRA à ~0,85 ; la
-fusion <code>|T−B|</code> débloque le rappel Conforme au-dessus de 85 % ; et la
-représentation radiale gagne encore ~4 points de rappel (0,884 → 0,925) à précision
-équivalente, confirmant l'intuition du sujet sur la cohérence radiale.</p>
+<figure><figcaption>Comparaison des différentes versions testées (suivi automatique des essais).</figcaption></figure>
 
-<h3>4.4 Analyse des erreurs et de l'entraînement</h3>
-{img("confusion_final.png", "62%")}
-<figure><figcaption>Matrice de confusion du modèle final sur le jeu de test.</figcaption></figure>
-<p>Le point dur résiduel est la confusion Conforme ↔ PIETRA (défauts de surface fins). Fait
-important pour la filière : <b>les erreurs vont dans le sens sûr</b> — le modèle recale à
-tort quelques bons fruits (perte de rendement, tolérée) bien plus qu'il ne laisse passer de
-mauvais. C'est exactement la philosophie du cahier des charges.</p>
+<h3>4.4 Analyse des erreurs</h3>
+{img("confusion_final.png", "60%")}
+<figure><figcaption>Tableau des erreurs de la version retenue : les cases de la diagonale sont les
+bonnes réponses, les autres les confusions.</figcaption></figure>
+<p>Les erreurs qui restent sont surtout des confusions entre « bon » et « PIETRA » (des défauts de
+surface très fins). Le plus rassurant pour la coopérative : <b>les erreurs vont dans le bon sens</b>
+— le logiciel écarte parfois un bon fruit par excès de prudence, mais laisse très rarement passer un
+mauvais. C'est exactement ce que demande la consigne.</p>
+
+<h3>4.5 Vérifier que le résultat est solide</h3>
+<p>Pour être sûr que ces résultats ne sont pas un coup de chance, j'ai <b>refait l'expérience 5 fois</b>
+sur 5 découpages différents des données. Les résultats restent stables (précision autour de 95 %,
+rappel autour de 87 %, avec très peu de variation). Le logiciel est donc fiable, pas chanceux.</p>
 {img("mlflow_history.png")}
-<figure><figcaption>Historique d'entraînement : oscillation initiale puis stabilisation
-(cosine LR) ; précision Conforme au-dessus de 0,95, rappel autour de la cible.</figcaption></figure>
+<figure><figcaption>Évolution des performances au fil de l'apprentissage : ça tâtonne au début,
+puis ça se stabilise au-dessus des objectifs.</figcaption></figure>
 
-<h3>4.5 Validation croisée (robustesse)</h3>
-<p>Pour ne pas me fier à un seul découpage, j'ai mené une validation croisée en 5 plis
-(toujours groupée par châtaigne). Résultats stables : précision Conforme <b>0,949 ± 0,012</b>,
-rappel <b>0,868 ± 0,019</b>, accuracy <b>0,887 ± 0,012</b>. L'écart-type de 1 à 2 points
-confirme que le résultat n'est pas un coup de chance. Ces modèles de validation ne sont pas
-le modèle livré — ils ne servent qu'à en éprouver la fiabilité.</p>
-
-<h2>5. Compatibilité production (§4.3)</h2>
-<p>J'ai exporté le modèle retenu au format <b>ONNX</b> (avec un axe de lot dynamique pour
-traiter d'un coup les images d'un cycle) et vérifié que ses sorties correspondent à celles de
-PyTorch. Le coût est très faible :</p>
+<h2>5. Faire tourner le logiciel sur la vraie machine</h2>
+<p>J'ai converti le logiciel dans un format standard et léger (appelé ONNX), et vérifié qu'il donne
+exactement les mêmes réponses qu'avant conversion. Son coût est très faible :</p>
 <table>
-<tr><th>Poste</th><th>Valeur</th></tr>
-<tr><td>Paramètres</td><td>3,71 M</td></tr>
-<tr><td>Poids ONNX (FP32)</td><td>~15,3 Mo (≈ 7,7 Mo en FP16)</td></tr>
-<tr><td>Mémoire au repos / par cycle (6 paires)</td><td>~75 Mo / ~220 Mo</td></tr>
-<tr><td>Latence par cycle (CPU de dev)</td><td>~48 ms (~240 images/s)</td></tr>
+<tr><th>Élément</th><th>Valeur</th></tr>
+<tr><td>Taille du logiciel</td><td>~15 Mo</td></tr>
+<tr><td>Mémoire utilisée (au repos / en marche)</td><td>~75 Mo / ~220 Mo</td></tr>
+<tr><td>Temps de réponse pour un cycle de la machine</td><td>~0,05 seconde</td></tr>
 </table>
-<p>Sur les 3 Go de la GTX 1060, la marge est d'un facteur ~10 ; sur GPU en FP16, la latence
-sera bien plus basse. <b>Recommandation</b> : retenir le dual-branch radial + TTA. Toutes les
-exigences (précision, rappel, temps réel, tenue en 3 Go) sont satisfaites, la mémoire étant le
-point le plus confortable. L'usage se fait via <code>predict.py</code>, qui prend les deux
-photos d'un fruit et renvoie sa classe.</p>
+<p>La carte graphique de la machine dispose de 3 Go de mémoire : on en utilise à peine un dixième,
+il y a donc une marge très confortable. Le temps de réponse est largement suffisant pour suivre la
+cadence de tri. En résumé, <b>toutes les exigences sont respectées</b>, et la mémoire est le point le
+plus tranquille. À l'usage, il suffit de donner au logiciel les deux photos d'un fruit pour obtenir
+sa catégorie.</p>
 
-<h2>6. Technologies et ressources utilisées</h2>
-<p><b>Outils.</b> Python 3.13 ; PyTorch (accélération MPS sur Mac) et torchvision
-(MobileNetV3) pour les modèles ; OpenCV pour l'extraction vidéo, le masque circulaire et le
-déroulé polaire ; scikit-learn (<code>StratifiedGroupKFold</code>) pour le découpage
-anti-fuite ; MLflow pour le suivi des expériences ; ONNX / onnxruntime pour l'export et la
-mesure de latence ; DVC pour récupérer le dataset ; l'outil Streamlit fourni pour terminer la
-labellisation ; Git pour le dépôt de travail.</p>
-<p><b>Références qui ont orienté mes choix.</b> Des templates PyTorch de référence pour la
-structure du projet ; des travaux de tri de fruits/graines multi-caméra (grading de pommes
-multi-vues, SeedSortNet) qui m'ont conforté dans l'idée du dual-branch ; la bibliothèque timm
-pour les backbones légers.</p>
+<h2>6. Ce que j'ai utilisé</h2>
+<p><b>Outils.</b> Le langage Python ; des bibliothèques spécialisées pour créer et entraîner le
+logiciel de reconnaissance (PyTorch, MobileNet) ; un outil de traitement d'images (OpenCV) pour
+découper les vidéos et préparer les photos ; un outil pour découper proprement les données
+(scikit-learn) ; un carnet de bord automatique des essais (MLflow) ; un format standard pour la mise
+en production (ONNX) ; l'outil de stockage des images fourni (DVC) et l'outil de vérification des
+étiquettes (Streamlit) ; et Git pour archiver tout le code.</p>
+<p><b>Ce qui m'a inspiré.</b> Je me suis appuyé sur des projets publics reconnus de tri de
+fruits et de graines par caméra, qui utilisent la même idée de « plusieurs photos par objet », pour
+confirmer ma direction.</p>
 
-<h2>7. Conclusion et perspectives</h2>
-<p>Le projet aboutit à un modèle qui <b>respecte le cahier des charges avec marge</b> sur le
-jeu de test (précision Conforme 95,1 %, rappel 92,5 %, accuracy 92,3 %), tient largement sur
-le matériel cible, et dont le résultat est prouvé stable par validation croisée. L'apport
-principal n'est pas d'avoir empilé des couches, mais d'avoir <b>traduit le problème métier en
-modèle</b> : une châtaigne se juge sur ses deux faces, un défaut crée une asymétrie entre les
-vues, et la représentation radiale exploite la géométrie circulaire du créneau. Piloter chaque
-choix par la contrainte du cahier des charges — la précision d'abord, sur du matériel modeste
-— m'a évité d'optimiser un chiffre qui n'aurait pas tenu en production.</p>
-<p><b>Perspectives.</b> Vérifier la part de bruit d'étiquetage dans la confusion
-Conforme/PIETRA (potentiellement plus rentable qu'un changement d'architecture) ; mesurer la
-latence réelle sur la GTX 1060 cible ; et envisager un ensemble de modèles si un léger gain de
-précision était requis, en pesant le surcoût de latence.</p>
+<h2>7. Conclusion</h2>
+<p>Le logiciel final <b>respecte la consigne avec de la marge</b> (95 % de précision et 92 % de
+rappel sur les fruits jamais vus), tient largement sur la machine de la coopérative, et son résultat
+est prouvé stable. L'essentiel du travail n'a pas été d'empiler des calculs, mais d'avoir <b>bien
+compris le problème</b> : une châtaigne se juge sur ses deux faces, un défaut d'un seul côté se
+repère par la différence entre les photos, et dérouler le disque de l'image aide à mieux voir. En
+gardant toujours la consigne de la coopérative en tête — la sûreté avant tout — j'ai évité de courir
+après un beau chiffre qui n'aurait pas tenu en vrai.</p>
+<p><b>Pistes pour la suite.</b> Vérifier si une partie des confusions « bon / PIETRA » vient d'erreurs
+d'étiquetage dans les données ; mesurer le temps de réponse réel sur la machine de la coopérative ; et,
+si besoin d'un tout petit gain, combiner plusieurs versions du logiciel.</p>
 """
 
-HTML = f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{BODY}</body></html>"
+HTML = f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}<body>{BODY}</body></html>"
 
-out_html = os.path.join(HERE, "RAPPORT_CastagNet.html")
+out_html = os.path.join(HERE, "_rapport_tmp.html")
 open(out_html, "w").write(HTML)
-print("HTML écrit:", out_html)
 
 chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 out_pdf = os.path.join(HERE, "RAPPORT_CastagNet.pdf")
 subprocess.run([chrome, "--headless", "--disable-gpu", "--no-pdf-header-footer",
                 f"--print-to-pdf={out_pdf}", "file://" + out_html], check=True,
                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+os.remove(out_html)
 print("PDF écrit:", out_pdf, os.path.getsize(out_pdf) // 1024, "Ko")
