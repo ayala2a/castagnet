@@ -15,9 +15,8 @@ production (§4.3).
 
 ## Livrables (pour l'évaluation)
 
-- **Rapport PDF** : **`reports/RAPPORT_CastagNet.pdf`** (rapport de projet complet —
-  déroulé, justifications, technologies). Annexes markdown : `RAPPORT_FINAL.md`,
-  `RAPPORT_MARIO.md`, `quality_report.md`, `choix_justifies.md`, `references_ml.md`.
+- **Rapport PDF** : **`reports/RAPPORT_CastagNet.pdf`** (rapport de projet — court et
+  accessible). Détails techniques : **`reports/ANNEXE_TECHNIQUE.md`**.
 - **Modèle ONNX** : `model_dualbranch.onnx` + `model_dualbranch.onnx.data` (racine du
   dépôt), aussi téléchargeable dans la **[Release v1.0](../../releases/tag/v1.0)**.
 - **Données & labels** : `data/labels_principal.csv` (mis à jour), `data/pairs_TB.csv`
@@ -33,7 +32,7 @@ se prend sur la paire, pas sur une image isolée** : ~34 % des châtaignes prés
 apparaissent « Vide » sur une seule des deux vues (positionnement). L'analyse montre
 que les vues T et B ne sont **jamais en conflit** sur une vraie classe — le seul écart
 possible est « une face Vide ». D'où la règle d'agrégation *non-Vide gagne*
-(voir `reports/quality_report.md`).
+(détails dans `reports/ANNEXE_TECHNIQUE.md`).
 
 ## Structure
 
