@@ -42,17 +42,14 @@ castagnet/
 │   ├── pairs_TB.csv          # 1 ligne / châtaigne : vues T & B, labels, tags
 │   └── labels_chestnut.csv   # labels agrégés par châtaigne (cible du split)
 ├── reports/
-│   ├── quality_report.md     # §4.1 — rapport qualité actualisé
-│   ├── quality_stats.json    # stats brutes reproductibles
-│   └── figures/              # graphiques du rapport
+│   ├── RAPPORT_CastagNet.pdf # rapport de projet (principal)
+│   ├── ANNEXE_TECHNIQUE.md   # détails techniques
+│   └── figures/              # graphiques
 ├── src/
-│   ├── data/
-│   │   ├── build_pairs.py    # appariement T/B + agrégation label châtaigne
-│   │   └── quality_report.py # figures & stats §4.1
-│   ├── training/             # §4.2 (à venir) : make_splits / models / train / evaluate / export_onnx
-│   └── utils/
-├── configs/                  # configs d'expériences (yaml)
-└── notebooks/
+│   ├── data/                 # audit, appariement T/B, extraction & appariement vidéo
+│   └── training/             # splits, modèles, entraînement, évaluation, export, inférence
+├── model_dualbranch.onnx     # modèle final (+ .onnx.data)
+└── README.md
 ```
 
 ## Données
@@ -88,17 +85,11 @@ python src/data/build_pairs.py      # -> data/pairs_TB.csv, data/labels_chestnut
 python src/data/quality_report.py   # -> reports/figures/*.png, reports/quality_stats.json
 ```
 
-## Feuille de route
+## Résultat
 
-- [x] **§4.1** Appariement T/B + rapport qualité actualisé (par châtaigne)
-- [x] **§4.1** Extraction vidéo (2×750 frames) + crop circulaire des fruits
-- [x] **§4.1** Relectures terminées (100 %)
-- [x] **§4.2** Splits groupés anti-leak + CNN maison + dual-branch T/B (fusion |T−B|) + MLflow
-- [x] **§4.2** Cible cahier des charges atteinte (Conforme P=0,953 / R=0,884 sur test)
-- [x] **§4.3** Export ONNX vérifié + latence + analyse 12 flux
-- [x] **Rapport final** : `reports/RAPPORT_FINAL.md`
-
-Modèle retenu : dual-branch MobileNetV3-Large, fusion `[T, B, |T−B|]`, + TTA.
+Les 3 volets sont traités. **Modèle retenu** : dual-branch MobileNetV3-Large, fusion
+`[T, B, |T−B|]`, **représentation radiale** + TTA. Sur le jeu de test : Conforme
+**précision 0,951 / rappel 0,925**, accuracy 0,923 — cahier des charges respecté avec marge.
 
 ## Contraintes cahier des charges (Annexe A)
 
