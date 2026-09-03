@@ -71,20 +71,6 @@ Le modèle final est fourni au format ONNX, en **deux fichiers à garder ensembl
 la **Release** du dépôt pour le télécharger directement. Inférence :
 `python src/training/predict.py --t vue_dessus.jpg --b vue_dessous.jpg`.
 
-## Installation
-
-```bash
-# venv du projet (déjà créé à la racine marron/)
-source ../.venv/bin/activate     # torch, onnx, opencv, mlflow, sklearn...
-```
-
-## Reproduire l'étape 1 (qualité §4.1)
-
-```bash
-python src/data/build_pairs.py      # -> data/pairs_TB.csv, data/labels_chestnut.csv
-python src/data/quality_report.py   # -> reports/figures/*.png, reports/quality_stats.json
-```
-
 ## Résultat
 
 Les 3 volets sont traités. **Modèle retenu** : dual-branch MobileNetV3-Large, fusion
